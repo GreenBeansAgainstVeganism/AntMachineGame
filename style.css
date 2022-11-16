@@ -1,0 +1,53 @@
+.boxdiv {
+	border: 2px solid black;
+}
+
+header {
+	text-align: center;
+}
+
+#build-view {
+	padding: 5px;
+	width: 60%;
+	height: 560px;
+	margin: auto;
+	display: flex;
+}
+
+#tool-panel {
+	flex-grow: 1;
+	margin-right: 5px;
+}
+
+#view-panel {
+	width: 70%;
+	display: flex;
+	flex-direction: column;
+	
+}
+
+#control-bar {
+	border-bottom: 2px solid black;
+	height: 40px;
+	/* background: red; */
+	
+}
+
+#circuit-area {
+	overflow: scroll;
+	width: auto;
+	height: 100%;
+	padding: 5px;
+	/* background: lime; */
+}
+
+#circuit-board {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+
+#circuit-board td {
+	border: 1px solid black;
+	width: 80px;
+	height: 80px;
+}
