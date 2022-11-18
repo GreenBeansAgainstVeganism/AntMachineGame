@@ -28,7 +28,8 @@ header {
 	margin-right: 5px;
 	padding: 5px;
 	display: flex;
-	
+	flex-flow: row wrap;
+	align-content: flex-start;	
 }
 
 .tool-button {
