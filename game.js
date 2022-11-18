@@ -1,5 +1,7 @@
 var circuitBoard;
 var currentTool = 0;
+
+const IMGANT = (img => {img.src = 'assets/ant.png'; return img})(document.createElement('img'));
 const CELLSIZE = 80;
 
 // Initial Setup
@@ -100,18 +102,49 @@ window.addEventListener('load',function() {
  * as well as methods for drawing.
  */
 class CircuitCell {
-	constructor(canvas, coord, connections = [false,false,false,false])
+	constructor(canvas, coord, connections = [false,false,false,false], ant = false, antDir = 0)
 	{
 		this.canvas = canvas;
 		this.connections = connections;
 		this.coord = coord;
+		this.ant = ant;
 		
 		// Add interaction with cell
-		this.canvas.addEventListener('mousedown',() => {
-			circuitBoard.pathDrawerSelection = this.coord;
+		this.canvas.addEventListener('mousedown',(e) => {
+			if(currentTool==0)
+			{
+				circuitBoard.pathDrawerSelection = this.coord;
+			}
+			if(currentTool==1)
+			{
+				// Set to false if right button is pressed and/or shift key is held, otherwise set to true if left button is pressed and else undefined
+				let placeOrErase = (e.buttons>>1)%2 ? false : e.buttons%2 ? !e.shiftKey : undefined;
+				// right click is pressed
+				if(placeOrErase && this.connections.includes(true))
+				{
+					if(this.ant==true)
+					{
+						this.antDir = (this.antDir + 1) % 4;
+					}
+					else
+					{
+						this.ant = true;
+						this.antDir = 1;
+					}
+					while(!this.connections[(this.antDir+2)%4])
+					{
+						this.antDir = (this.antDir + 1) % 4;
+					}
+				}
+				else if(placeOrErase==false)
+				{
+					this.ant = false;
+				}
+				this.draw();
+			}
 		});
 		this.canvas.addEventListener('mouseover',(e) => {
-			if(circuitBoard.pathDrawerSelection != undefined)
+			if(currentTool==0 && circuitBoard.pathDrawerSelection != undefined)
 			{
 				// Set to false if right button is pressed and/or shift key is held, otherwise set to true if left button is pressed and else undefined
 				let placeOrErase = (e.buttons>>1)%2 ? false : e.buttons%2 ? !e.shiftKey : undefined;
@@ -120,8 +153,16 @@ class CircuitCell {
 				{
 					let prevCell = circuitBoard.cells[circuitBoard.pathDrawerSelection[0]][circuitBoard.pathDrawerSelection[1]]
 					prevCell.connections[linkDir] = placeOrErase;
-					prevCell.draw();
 					this.connections[(linkDir+2)%4] = placeOrErase;
+					
+					// Erase ants if needed
+					if(placeOrErase==false)
+					{
+						if(prevCell.ant && (prevCell.antDir+2)%4 == linkDir) prevCell.ant = false;
+						if(this.ant && this.antDir == linkDir) this.ant = false;
+					}
+					
+					prevCell.draw();
 					this.draw();
 				}
 				circuitBoard.pathDrawerSelection = this.coord;
@@ -148,6 +189,14 @@ class CircuitCell {
 			}
 		});
 		ctx.stroke();
+		if(this.ant)
+		{
+			ctx.save();
+			ctx.translate(m,m);
+			ctx.rotate((1-this.antDir)*Math.PI/2);
+			ctx.drawImage(IMGANT,-16.5,-8);
+			ctx.restore();
+		}
 	}
 	get right() {return this.connections[0]}
 	set right(b) {this.connections[0]=b}
