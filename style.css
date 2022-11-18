@@ -1,5 +1,14 @@
+:root {
+	font-family: Book Antiqua, serif;
+}
+
 .boxdiv {
 	border: 2px solid black;
+}
+
+::selection {
+	background: black;
+	color: yellow;
 }
 
 header {
@@ -17,6 +26,32 @@ header {
 #tool-panel {
 	flex-grow: 1;
 	margin-right: 5px;
+	padding: 5px;
+	display: flex;
+	
+}
+
+.tool-button {
+	width: 100px;
+	height: 100px;
+	background: white;
+	border: 2px solid white;
+}
+
+.tool-button:hover {
+	border-color: yellow;
+}
+
+.tool-button:active {
+	border-color: red;
+}
+
+.tool-button > img {
+	display: block;
+	margin: auto;
+	user-select: none;
+	max-width: 90%;
+	max-height: 90%;
 }
 
 #view-panel {
@@ -28,7 +63,7 @@ header {
 
 #control-bar {
 	border-bottom: 2px solid black;
-	height: 40px;
+	height: 60px;
 	/* background: red; */
 	
 }
@@ -50,4 +85,10 @@ header {
 	border: 1px solid black;
 	width: 80px;
 	height: 80px;
+	overflow: clip;
+	padding: 0;
+}
+
+canvas {
+	display: block;
 }
