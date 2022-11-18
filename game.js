@@ -53,6 +53,22 @@ window.addEventListener('load',function() {
 	let relPathDrawer = function () {circuitBoard.pathDrawerSelection = undefined};
 	circuitArea.addEventListener('mouseup',relPathDrawer);
 	circuitArea.addEventListener('mouseleave',relPathDrawer);
+	
+	let toolButtons = document.getElementsByClassName('tool-button');
+	for(let i=0; i<toolButtons.length; i++)
+	{
+		toolButtons[i].addEventListener('mousedown', function() {
+			if(this.dataset.toolid!=undefined)
+			{
+				for(let j=0; j<toolButtons.length; j++) if(toolButtons[j].dataset.toolid==currentTool) {
+					toolButtons[j].classList.remove('tool-active');
+					break;
+				}
+				currentTool = this.dataset.toolid;
+				this.classList.add('tool-active');
+			}
+		});
+	}
 	// test display one way line component
 	// circuitBoard.cells[0][0].right=true;
 	// circuitBoard.cells[0][0].down=true;

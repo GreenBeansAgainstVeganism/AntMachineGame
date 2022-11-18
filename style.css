@@ -54,6 +54,10 @@ header {
 	max-height: 90%;
 }
 
+.tool-button.tool-active {
+	background-color: #ddeeff;
+}
+
 #view-panel {
 	width: 70%;
 	display: flex;
