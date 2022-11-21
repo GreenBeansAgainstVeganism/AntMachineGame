@@ -11,6 +11,10 @@
 	color: yellow;
 }
 
+button {
+	user-select: none;
+}
+
 header {
 	text-align: center;
 }
@@ -26,7 +30,16 @@ header {
 #tool-panel {
 	flex-grow: 1;
 	margin-right: 5px;
-	padding: 5px;
+}
+
+#tool-heading {
+	border-bottom: 2px solid black;
+	margin: 0;
+	text-align: center;
+}
+
+#tool-list {
+	padding: 2px;
 	display: flex;
 	flex-flow: row wrap;
 	align-content: flex-start;	
@@ -37,6 +50,7 @@ header {
 	height: 100px;
 	background: white;
 	border: 2px solid white;
+	margin: 2px;
 }
 
 .tool-button:hover {
@@ -59,6 +73,10 @@ header {
 	background-color: #ddeeff;
 }
 
+#tool-button-tunnel-horizontal > img{
+	transform: rotate(90deg);
+}
+
 #view-panel {
 	width: 70%;
 	display: flex;
@@ -69,12 +87,13 @@ header {
 #control-bar {
 	border-bottom: 2px solid black;
 	height: 60px;
+	padding: 5px;
 	/* background: red; */
 	
 }
 
 #circuit-area {
-	overflow: scroll;
+	overflow: auto;
 	width: auto;
 	height: 100%;
 	padding: 5px;

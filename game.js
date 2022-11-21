@@ -1,19 +1,23 @@
 var circuitBoard;
 var currentTool = 0;
 
+const PIXELRATIO = Math.round(window.devicePixelRatio) || 1;
+
 const IMGANT = (img => {img.src = 'assets/ant.png'; return img})(document.createElement('img'));
 const CELLSIZE = 80;
+const CELLRESOLUTION = CELLSIZE * PIXELRATIO;
+const [bheight,bwidth] = [8,10];
 
 // Initial Setup
 window.addEventListener('load',function() {
 	// Prevent context menus when right-clicking in the build view
 	document.getElementById('build-view').addEventListener('contextmenu',function(e) {e.preventDefault()});
-	// Generate a test circuit board
-	const [bheight,bwidth] = [8,10];
+	// Generate the circuit board object, which allows display and manipulation of a circuit
 	circuitBoard = {
 		table: document.getElementById('circuit-board'),
 		cells: new Array(bheight).fill(0).map(() => []),
 		pathDrawerSelection: undefined,
+		// Test function just to draw every cell
 		drawCells: function(x1=0,y1=0,x2=bwidth,y2=bheight) {
 			for(let x = x1; x < x2; x++) for(let y = y1; y < y2; y++)
 			{
@@ -26,7 +30,68 @@ window.addEventListener('load',function() {
 			if(c2[0]==c1[0] && c2[1]==c1[1]-1) return 2;
 			if(c2[0]==c1[0]+1 && c2[1]==c1[1]) return 3;
 			return undefined;
-		}
+		},
+		// Advances the circuitBoard by one step of simulation and flags cells for drawing
+		simulate: function() {
+			let ants = new Array(bheight).fill(0).map(() => new Array(bwidth).fill(0));
+			let antDirs = new Array(bheight).fill(0).map(() => []);
+			// populate ants and antDirs
+			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			{
+				let c = this.cells[y][x];
+				if(c.ant)
+				{
+					// console.log('ant found');
+					for(let i = 0; i < 4; i++)
+					{
+						if(c.connections[i] && i != (c.antDir+2)%4)
+						{
+							// console.log('spreading in direction '+i);
+							// spread ants
+							let [dy,dx] = dirToCoord(i);
+							// TODO Add tunnel functionality
+							// Make sure the ants don't fall off the edge
+							if(ants[y+dy] == undefined || ants[y+dy][x+dx] == undefined) continue;
+							
+							ants[y+dy][x+dx]++;
+							antDirs[y+dy][x+dx] = i;
+						}
+					}
+				}
+			}
+			// console.log(ants);
+			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			{
+				let c = this.cells[y][x];
+				let ant = ants[y][x];
+				let antDir = antDirs[y][x];
+				// Flag c for redrawing if current ant is not equal to ant for next step
+				if(c.ant != (ant == 1) || (ant == 1 && c.antDir != antDir))
+				{
+					c.drawFlag = true;
+				}
+				// If exactly one ant has spread into this space, add an ant next step
+				if(ant == 1)
+				{
+					c.antDir = antDir;
+					c.ant = true;
+				}
+				else
+				{
+					c.ant = false;
+				}
+			}
+		},
+		drawFlagged: function() {
+			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			{
+				if(this.cells[y][x].drawFlag)
+				{
+					this.cells[y][x].draw();
+					this.cells[y][x].drawFlag = false;
+				}
+			}
+		},
 	};
 	circuitBoard.table.style.width = CELLSIZE*bwidth+'px';
 	
@@ -38,8 +103,11 @@ window.addEventListener('load',function() {
 		{
 			let cell = document.createElement('td');
 			let canv = document.createElement('canvas');
-			canv.width = CELLSIZE;
-			canv.height = CELLSIZE;
+			canv.width = CELLRESOLUTION;
+			canv.height = CELLRESOLUTION;
+			canv.style.width = CELLSIZE+'px';
+			canv.style.height = CELLSIZE+'px';
+			canv.draggable = false;
 			// let ctx = canv.getContext('2d');
 			// ctx.fillStyle = '#ff0000';
 			// ctx.fillRect(0,0,80,80);
@@ -66,35 +134,17 @@ window.addEventListener('load',function() {
 					toolButtons[j].classList.remove('tool-active');
 					break;
 				}
-				currentTool = this.dataset.toolid;
+				currentTool = Number(this.dataset.toolid);
 				this.classList.add('tool-active');
 			}
 		});
 	}
-	// test display one way line component
-	// circuitBoard.cells[0][0].right=true;
-	// circuitBoard.cells[0][0].down=true;
-	// circuitBoard.cells[0][1].left=true;
-	// circuitBoard.cells[0][1].right=true;
-	// circuitBoard.cells[0][1].down=true;
-	// circuitBoard.cells[0][2].left=true;
-	// circuitBoard.cells[0][2].down=true;
-	// circuitBoard.cells[1][0].left=true;
-	// circuitBoard.cells[1][0].up=true;
-	// circuitBoard.cells[1][0].down=true;
-	// circuitBoard.cells[1][1].up=true;
-	// circuitBoard.cells[1][1].right=true;
-	// circuitBoard.cells[1][2].left=true;
-	// circuitBoard.cells[1][2].up=true;
-	// circuitBoard.cells[1][2].right=true;
-	// circuitBoard.cells[1][2].down=true;
-	// circuitBoard.cells[2][0].up=true;
-	// circuitBoard.cells[2][0].right=true;
-	// circuitBoard.cells[2][1].left=true;
-	// circuitBoard.cells[2][1].right=true;
-	// circuitBoard.cells[2][2].left=true;
-	// circuitBoard.cells[2][2].up=true;
-	circuitBoard.drawCells(0,0,3,3);
+	
+	let simulateButton = document.getElementById('control-button-simulate');
+	simulateButton.addEventListener('mousedown', function() {
+		circuitBoard.simulate();
+		circuitBoard.drawFlagged();
+	});
 });
 
 /**
@@ -102,45 +152,85 @@ window.addEventListener('load',function() {
  * as well as methods for drawing.
  */
 class CircuitCell {
-	constructor(canvas, coord, connections = [false,false,false,false], ant = false, antDir = 0)
+	constructor(canvas, coord, connections = [false,false,false,false], ant = false, antDir = 0, vtunnel, htunnel)
 	{
 		this.canvas = canvas;
 		this.connections = connections;
 		this.coord = coord;
 		this.ant = ant;
+		this.vtunnel = vtunnel;
+		this.htunnel = htunnel;
+		this.drawFlag = false; // Flag used to decide which cells need to be redrawn at each step of simulation.
 		
 		// Add interaction with cell
 		this.canvas.addEventListener('mousedown',(e) => {
-			if(currentTool==0)
+			let placeOrErase = (e.buttons>>1)%2 ? false : e.buttons%2 ? !e.shiftKey : undefined;
+			switch(currentTool)
 			{
-				circuitBoard.pathDrawerSelection = this.coord;
-			}
-			if(currentTool==1)
-			{
-				// Set to false if right button is pressed and/or shift key is held, otherwise set to true if left button is pressed and else undefined
-				let placeOrErase = (e.buttons>>1)%2 ? false : e.buttons%2 ? !e.shiftKey : undefined;
-				// right click is pressed
-				if(placeOrErase && this.connections.includes(true))
-				{
-					if(this.ant==true)
+				case 0: /* Draw Tool */
+					circuitBoard.pathDrawerSelection = this.coord;
+					break;
+				case 1: /* Ant Tool */
+					// Set to false if right button is pressed and/or shift key is held, otherwise set to true if left button is pressed and else undefined
+					// right click is pressed
+					if(placeOrErase && this.connections.includes(true))
 					{
-						this.antDir = (this.antDir + 1) % 4;
+						if(this.ant==true)
+						{
+							this.antDir = (this.antDir + 1) % 4;
+						}
+						else
+						{
+							this.ant = true;
+							this.antDir = 1;
+						}
+						
+						// Adjust antDir until ant is sitting on a path connection
+						while(!this.connections[(this.antDir+2)%4])
+						{
+							this.antDir = (this.antDir + 1) % 4;
+						}
 					}
-					else
+					else if(placeOrErase==false)
 					{
-						this.ant = true;
-						this.antDir = 1;
+						this.ant = false;
 					}
-					while(!this.connections[(this.antDir+2)%4])
+					this.draw();
+					break;
+				case 2: /* Vertical Tunnel */
+					if(placeOrErase != undefined)
 					{
-						this.antDir = (this.antDir + 1) % 4;
+						if(this.coord[0] == 0)
+						{
+							// this.vtunnel = 'toptunnel';// TODO
+							this.up = placeOrErase;
+							this.draw();
+						} else if (this.coord[0] == bheight-1)
+						{
+							// this.vtunnel = 'bottomtunnel';// TODO
+							this.down = placeOrErase;
+							this.draw();
+						}
 					}
-				}
-				else if(placeOrErase==false)
-				{
-					this.ant = false;
-				}
-				this.draw();
+					break;
+				case 3: /* Horizontal Tunnel */
+					if(placeOrErase != undefined)
+					{
+						if(this.coord[1] == 0)
+						{
+							// this.htunnel = 'lefttunnel';// TODO
+							this.left = placeOrErase;
+							this.draw();
+						} else if (this.coord[1] == bwidth-1)
+						{
+							// this.htunnel = 'righttunnel';// TODO
+							this.right = placeOrErase;
+							this.draw();
+						}
+					}
+					break;
+				default:
+					// Biscuits
 			}
 		});
 		this.canvas.addEventListener('mouseover',(e) => {
@@ -168,34 +258,70 @@ class CircuitCell {
 				circuitBoard.pathDrawerSelection = this.coord;
 			}
 		});
-		
+		// this.canvas.addEventListener('onselect', (e) => {console.log('tried to drag');e.preventDefault();});
 		
 	}
 	draw()
 	{
+		// Get context
 		let ctx = this.canvas.getContext('2d');
-		let m = CELLSIZE/2;
-		ctx.clearRect(0,0,CELLSIZE,CELLSIZE);
+		// Convenience variable for half the cell size
+		let m = CELLRESOLUTION/2;
+		// Clear the canvas
+		ctx.clearRect(0,0,CELLRESOLUTION,CELLRESOLUTION);
 		
-		// ctx.strokeStyle = '#000000';
-		ctx.lineWidth = 5;
+		// Setup parameters
+		ctx.lineWidth = 12;
 		ctx.lineCap = 'round';
-		ctx.beginPath();
-		[[CELLSIZE,m],[m,0],[0,m],[m,CELLSIZE]].forEach((coord,dir) => {
-			if(this.connections[dir])
+		ctx.fillStyle = 'gray';
+		// Setup context for rotation
+		ctx.save();
+		ctx.translate(m,m);
+		// Draw connections + tunnels
+		for(let i = 0; i < 4; i++)
+		{
+			if(this.connections[i])
 			{
-				ctx.moveTo(m,m);
-				ctx.lineTo(...coord);
+				ctx.beginPath();
+				ctx.moveTo(0,0);
+				ctx.lineTo(m,0);
+				ctx.stroke();
+				if(this.isBorder(i))
+				{
+					ctx.beginPath();
+					ctx.arc(m,0,24,0,2*Math.PI);
+					ctx.fill();
+					ctx.stroke();
+				}
 			}
-		});
-		ctx.stroke();
+			ctx.rotate(-Math.PI/2);
+		}
+		// Draw ant
 		if(this.ant)
 		{
-			ctx.save();
-			ctx.translate(m,m);
-			ctx.rotate((1-this.antDir)*Math.PI/2);
-			ctx.drawImage(IMGANT,-16.5,-8);
-			ctx.restore();
+			ctx.rotate(-this.antDir*Math.PI/2);
+			ctx.drawImage(IMGANT,-84,-49.5);
+		}
+		ctx.restore();
+	}
+	
+	/**
+	 * Helper function to determine if there is a border in the direction 'dir' from this cell
+	 */
+	isBorder(dir)
+	{
+		switch(dir)
+		{
+			case 0:
+				return this.coord[1] == bwidth-1;
+			case 1:
+				return this.coord[0] == 0;
+			case 2:
+				return this.coord[1] == 0;
+			case 3:
+				return this.coord[0] == bheight-1;
+			default:
+				return false;
 		}
 	}
 	get right() {return this.connections[0]}
@@ -207,3 +333,23 @@ class CircuitCell {
 	get down() {return this.connections[3]}
 	set down(b) {this.connections[3]=b}
 };
+
+function dirToCoord(dir)
+{
+	switch(dir)
+	{
+		case 0: return [0,1];
+		case 1: return [-1,0];
+		case 2: return [0,-1];
+		case 3: return [1,0];
+		default: return undefined;
+	}
+}
+
+class CircuitData
+{
+	constructor (board)
+	{
+		
+	}
+}
