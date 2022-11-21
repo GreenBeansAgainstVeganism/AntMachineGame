@@ -271,7 +271,7 @@ class CircuitCell {
 		ctx.clearRect(0,0,CELLRESOLUTION,CELLRESOLUTION);
 		
 		// Setup parameters
-		ctx.lineWidth = 12;
+		ctx.lineWidth = 5*PIXELRATIO;
 		ctx.lineCap = 'round';
 		ctx.fillStyle = 'gray';
 		// Setup context for rotation
@@ -289,7 +289,7 @@ class CircuitCell {
 				if(this.isBorder(i))
 				{
 					ctx.beginPath();
-					ctx.arc(m,0,24,0,2*Math.PI);
+					ctx.arc(m,0,10*PIXELRATIO,0,2*Math.PI);
 					ctx.fill();
 					ctx.stroke();
 				}
@@ -300,7 +300,7 @@ class CircuitCell {
 		if(this.ant)
 		{
 			ctx.rotate(-this.antDir*Math.PI/2);
-			ctx.drawImage(IMGANT,-84,-49.5);
+			ctx.drawImage(IMGANT,-30*PIXELRATIO,-17.5*PIXELRATIO,IMGANT.width/3*PIXELRATIO,IMGANT.height/3*PIXELRATIO);
 		}
 		ctx.restore();
 	}
