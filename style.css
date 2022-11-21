@@ -28,7 +28,8 @@ header {
 }
 
 #tool-panel {
-	flex-grow: 1;
+	flex-basis: 212px;
+	flex-shrink: 0;
 	margin-right: 5px;
 }
 
@@ -78,7 +79,10 @@ header {
 }
 
 #view-panel {
-	width: 70%;
+	flex-grow: 1;
+	flex-shrink: 1;
+	min-width: 0;
+	flex-basis: 480px;
 	display: flex;
 	flex-direction: column;
 	
@@ -88,16 +92,14 @@ header {
 	border-bottom: 2px solid black;
 	height: 60px;
 	padding: 5px;
-	/* background: red; */
 	
 }
 
 #circuit-area {
 	overflow: auto;
-	width: auto;
+	max-width: 100%;
 	height: 100%;
 	padding: 5px;
-	/* background: lime; */
 }
 
 #circuit-board {
@@ -115,4 +117,16 @@ header {
 
 canvas {
 	display: block;
+}
+
+@media screen and (max-width: 1200px) {
+	#build-view {
+		width: 80%;
+	}
+}
+
+@media screen and (max-width: 800px) {
+	#tool-panel {
+		flex-basis: 108px;
+	}
 }

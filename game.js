@@ -53,6 +53,9 @@ window.addEventListener('load',function() {
 							// Make sure the ants don't fall off the edge
 							if(ants[y+dy] == undefined || ants[y+dy][x+dx] == undefined) continue;
 							
+							// Don't spread if there is another ant going the opposite direction (same as colliding)
+							if(this.cells[y+dy][x+dx].ant && this.cells[y+dy][x+dx].antDir != i) continue;
+							
 							ants[y+dy][x+dx]++;
 							antDirs[y+dy][x+dx] = i;
 						}
