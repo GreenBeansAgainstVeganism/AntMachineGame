@@ -11,10 +11,6 @@
 	color: yellow;
 }
 
-p {
-	margin:0;
-}
-
 button {
 	user-select: none;
 	font-family: Book Antiqua, serif;
@@ -24,12 +20,35 @@ header {
 	text-align: center;
 }
 
+input:invalid {
+	outline-color: red;
+}
+
+label {
+	font-size: 10pt;
+	display: inline-block;
+}
+
 #build-view {
 	padding: 5px;
 	width: 60%;
 	height: 560px;
 	margin: auto;
 	display: flex;
+}
+
+#build-view p {
+	margin:0;
+}
+
+#build-view h2 {
+	font-size: 14pt;
+}
+
+#build-view h3 {
+	margin:0;
+	font-size: 10pt;
+	font-style: italic;
 }
 
 #tool-panel {
@@ -100,7 +119,12 @@ header {
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: space-around;
+}
+
+#control-bar .separator {
+	height: 100%;
+	border-left: 1px solid gray;
 }
 
 #circuit-area {

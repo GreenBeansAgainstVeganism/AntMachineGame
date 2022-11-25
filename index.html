@@ -13,9 +13,9 @@
 		</header>
 		<div id="build-view" class="boxdiv">
 			<div id="tool-panel" class="boxdiv">
-				<h3 id="tool-heading">
+				<h2 id="tool-heading">
 					Tools
-				</h3>
+				</h2>
 				<div id="tool-list">
 					<button type="button" id="tool-button-draw" class="tool-button tool-active" data-toolid="0" title="Draw Path">
 						<img src="assets/tool_button_draw.svg" draggable="false"></img>
@@ -34,16 +34,30 @@
 			<div id="view-panel" class="boxdiv">
 				<div id="control-bar">
 					<div>
-						<p>
+						<h3>
 							Files:
-						</p>
+						</h3>
 						<button type="button" id="control-button-save" class="control-button">
 							Save
 						</button>
 						<button type="button" id="control-button-load" class="control-button">
 							Load
 						</button>
+						<button type="button" id="control-button-clear" class="control-button">
+							Clear
+						</button>
 					</div>
+					<div class="separator"></div>
+					<div>
+						<h3>
+							Board:
+						</h3>
+						<label for="bheight" style="width:50px;">Height:</label>
+						<input type="number" id="control-input-bheight" name="bheight" min="2" max="20"><br>
+						<label for="bwidth" style="width:50px;">Width:</label>
+						<input type="number" id="control-input-bwidth" name="bwidth" min="2" max="20">
+					</div>
+					<div class="separator"></div>
 					<button type="button" id="control-button-simulate" class="control-button">
 						Simulate!
 					</button>

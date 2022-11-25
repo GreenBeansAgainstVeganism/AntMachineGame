@@ -1,13 +1,13 @@
 var circuitBoard;
 var currentTool = 0;
 var savedCircuit;
+var heightInput,widthInput;
 
 const PIXELRATIO = Math.round(window.devicePixelRatio) || 1;
 
 const IMGANT = (img => {img.src = 'assets/ant.png'; return img})(document.createElement('img'));
 const CELLSIZE = 80;
 const CELLRESOLUTION = CELLSIZE * PIXELRATIO;
-const [bheight,bwidth] = [8,10];
 
 // Initial Setup
 window.addEventListener('load',function() {
@@ -16,10 +16,129 @@ window.addEventListener('load',function() {
 	// Generate the circuit board object, which allows display and manipulation of a circuit
 	circuitBoard = {
 		table: document.getElementById('circuit-board'),
-		cells: new Array(bheight).fill(0).map(() => []),
+		cells: [],
+		get height() {return this.cells.length;},
+		get width() {return this.cells.length ? this.cells[0].length : 0;},
+		set height(h)
+		{
+			switch(Math.sign(this.height-h))
+			{
+				case 1:
+					// downsizing
+					
+					// delete rows
+					this.cells = this.cells.slice(0,h);
+					while(this.table.rows.length>h)
+					{
+						this.table.deleteRow(-1);
+					}
+					
+					// erase tunnels
+					if(this.height) for(let x = 0; x < this.width; x++)
+					{
+						this.cells[h-1][x].down = false;
+						if(this.cells[h-1][x].antDir == 1) this.cells[h-1][x].ant = false;
+						this.cells[h-1][x].draw();
+					}
+					break;
+				case -1:
+					// upsizing
+					
+					// erase tunnels
+					if(this.height) for(let x = 0; x < this.width; x++)
+					{
+						this.cells[this.height-1][x].down = false;
+						if(this.cells[this.height-1][x].antDir == 1) this.cells[h-1][x].ant = false;
+						this.cells[this.height-1][x].draw();
+					}
+					
+					// add rows
+					for(let y = this.height; y < h; y++)
+					{
+						let cellRow = [];
+						let row = document.createElement('tr');
+						for(let x=0; x < this.width; x++)
+						{
+							let cell = document.createElement('td');
+							let canv = document.createElement('canvas');
+							canv.width = CELLRESOLUTION;
+							canv.height = CELLRESOLUTION;
+							canv.style.width = CELLSIZE+'px';
+							canv.style.height = CELLSIZE+'px';
+							canv.draggable = false;
+							cellRow.push(new CircuitCell(canv,[y,x]));
+							cell.appendChild(canv);
+							row.appendChild(cell);
+						}
+						this.table.appendChild(row);
+						this.cells.push(cellRow);
+					}
+			}
+		},
+		set width(w)
+		{
+			switch(Math.sign(this.width-w))
+			{
+				case 1:
+					// downsizing
+					
+					// delete columns
+					for(let y = 0; y < this.height; y++)
+					{
+						this.cells[y] = this.cells[y].slice(0,w);
+						while(this.table.rows[y].cells.length>w)
+						{
+							this.table.rows[y].deleteCell(-1);
+						}
+					}
+					
+					// erase tunnels
+					if(this.width) for(let y = 0; y < this.height; y++)
+					{
+						this.cells[y][w-1].right = false;
+						if(this.cells[y][w-1].antDir == 2) this.cells[y][w-1].ant = false;
+						this.cells[y][w-1].draw();
+					}
+					
+					// set table width
+					this.table.style.width = CELLSIZE*this.width+'px';
+					break;
+				case -1:
+					// upsizing
+					
+					// erase tunnels
+					if(this.width) for(let y = 0; y < this.height; y++)
+					{
+						this.cells[y][this.width-1].right = false;
+						if(this.cells[y][this.width-1].antDir == 2) this.cells[y][w-1].ant = false;
+						this.cells[y][this.width-1].draw();
+					}
+					
+					// add columns
+					for(let y = 0; y < this.height; y++)
+					{
+						for(let x = this.cells[y].length; x < w; x++)
+						{
+							let cell = document.createElement('td');
+							let canv = document.createElement('canvas');
+							canv.width = CELLRESOLUTION;
+							canv.height = CELLRESOLUTION;
+							canv.style.width = CELLSIZE+'px';
+							canv.style.height = CELLSIZE+'px';
+							canv.draggable = false;
+							this.cells[y].push(new CircuitCell(canv,[y,x]));
+							cell.appendChild(canv);
+							this.table.rows[y].appendChild(cell);
+						}
+					}
+					
+					// set table width
+					this.table.style.width = CELLSIZE*this.width+'px';
+			}
+		},
 		pathDrawerSelection: undefined,
 		// Test function just to draw every cell
-		drawCells: function(x1=0,y1=0,x2=bwidth,y2=bheight) {
+		drawCells: function(x1=0,y1=0,x2=this.width,y2=this.height) {
 			for(let x = x1; x < x2; x++) for(let y = y1; y < y2; y++)
 			{
 				this.cells[y][x].draw();
@@ -34,10 +153,10 @@ window.addEventListener('load',function() {
 		},
 		// Advances the circuitBoard by one step of simulation and flags cells for drawing
 		simulate: function() {
-			let ants = new Array(bheight).fill(0).map(() => new Array(bwidth).fill(0));
-			let antDirs = new Array(bheight).fill(0).map(() => []);
+			let ants = new Array(this.height).fill(0).map(() => new Array(this.width).fill(0));
+			let antDirs = new Array(this.height).fill(0).map(() => []);
 			// populate ants and antDirs
-			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 			{
 				let c = this.cells[y][x];
 				if(c.ant)
@@ -64,7 +183,7 @@ window.addEventListener('load',function() {
 				}
 			}
 			// console.log(ants);
-			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 			{
 				let c = this.cells[y][x];
 				let ant = ants[y][x];
@@ -87,7 +206,7 @@ window.addEventListener('load',function() {
 			}
 		},
 		drawFlagged: function() {
-			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 			{
 				if(this.cells[y][x].drawFlag)
 				{
@@ -98,8 +217,10 @@ window.addEventListener('load',function() {
 		},
 		loadData: function(loc) {
 			// TODO resize board to fit data
+			this.height = loc.cells.length;
+			this.width = loc.cells[0].length;
 			
-			for(let x = 0; x < bwidth; x++) for(let y = 0; y < bheight; y++)
+			for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 			{
 				let c = this.cells[y][x];
 				let d = loc.cells[y][x];
@@ -108,32 +229,20 @@ window.addEventListener('load',function() {
 				c.antDir = d.antDir;
 			}
 			this.drawCells();
+			updateSizeInputs();
+		},
+		clear: function() {
+			for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
+			{
+				if(this.cells[y][x].connections.includes(true) || this.cells[y][x].ant) this.cells[y][x].drawFlag = true;
+				this.cells[y][x].connections = [false,false,false,false];
+				this.cells[y][x].ant = 0;
+			}
+			this.drawFlagged();
 		}
 	};
-	circuitBoard.table.style.width = CELLSIZE*bwidth+'px';
-	
-	// Generate the circuit cells
-	for(let i=0; i<bheight; i++)
-	{
-		let row = document.createElement('tr');
-		for(let j=0; j<bwidth; j++)
-		{
-			let cell = document.createElement('td');
-			let canv = document.createElement('canvas');
-			canv.width = CELLRESOLUTION;
-			canv.height = CELLRESOLUTION;
-			canv.style.width = CELLSIZE+'px';
-			canv.style.height = CELLSIZE+'px';
-			canv.draggable = false;
-			// let ctx = canv.getContext('2d');
-			// ctx.fillStyle = '#ff0000';
-			// ctx.fillRect(0,0,80,80);
-			circuitBoard.cells[i][j] = new CircuitCell(canv,[i,j]);
-			cell.appendChild(canv);
-			row.appendChild(cell);
-		}
-		circuitBoard.table.appendChild(row);
-	}
+	// circuitBoard.height = 5;
+	// circuitBoard.width = 6;
 	
 	let circuitArea = document.getElementById('circuit-area');
 	
@@ -175,6 +284,24 @@ window.addEventListener('load',function() {
 			circuitBoard.loadData(savedCircuit);
 		}
 	});
+	
+	let clearButton = document.getElementById('control-button-clear');
+	clearButton.addEventListener('mousedown', function() {circuitBoard.clear();});
+	
+	heightInput = document.getElementById('control-input-bheight');
+	heightInput.addEventListener('change', function() {
+		inputNumberFix(this);
+		circuitBoard.height = this.value;
+	});
+	
+	widthInput = document.getElementById('control-input-bwidth');
+	widthInput.addEventListener('change', function() {
+		inputNumberFix(this);
+		circuitBoard.width = this.value;
+	});
+	
+	updateSizeInputs();
+	
 	// testing only
 	circuitBoard.loadData(savedCircuit);
 });
@@ -184,14 +311,12 @@ window.addEventListener('load',function() {
  * as well as methods for drawing.
  */
 class CircuitCell {
-	constructor(canvas, coord, connections = [false,false,false,false], ant = false, antDir = 0, vtunnel, htunnel)
+	constructor(canvas, coord, connections = [false,false,false,false], ant = false, antDir = 0)
 	{
 		this.canvas = canvas;
 		this.connections = connections;
 		this.coord = coord;
 		this.ant = ant;
-		this.vtunnel = vtunnel;
-		this.htunnel = htunnel;
 		this.drawFlag = false; // Flag used to decide which cells need to be redrawn at each step of simulation.
 		
 		// Add interaction with cell
@@ -237,7 +362,7 @@ class CircuitCell {
 							// this.vtunnel = 'toptunnel';// TODO
 							this.up = placeOrErase;
 							this.draw();
-						} else if (this.coord[0] == bheight-1)
+						} else if (this.coord[0] == circuitBoard.height-1)
 						{
 							// this.vtunnel = 'bottomtunnel';// TODO
 							this.down = placeOrErase;
@@ -253,7 +378,7 @@ class CircuitCell {
 							// this.htunnel = 'lefttunnel';// TODO
 							this.left = placeOrErase;
 							this.draw();
-						} else if (this.coord[1] == bwidth-1)
+						} else if (this.coord[1] == circuitBoard.width-1)
 						{
 							// this.htunnel = 'righttunnel';// TODO
 							this.right = placeOrErase;
@@ -345,13 +470,13 @@ class CircuitCell {
 		switch(dir)
 		{
 			case 0:
-				return this.coord[1] == bwidth-1;
+				return this.coord[1] == circuitBoard.width-1;
 			case 1:
 				return this.coord[0] == 0;
 			case 2:
 				return this.coord[1] == 0;
 			case 3:
-				return this.coord[0] == bheight-1;
+				return this.coord[0] == circuitBoard.height-1;
 			default:
 				return false;
 		}
@@ -378,6 +503,17 @@ function dirToCoord(dir)
 	}
 }
 
+function inputNumberFix(obj)
+{
+	obj.value = Math.min(Math.max(Math.trunc(obj.value),obj.min),obj.max)
+}
+
+function updateSizeInputs()
+{
+	heightInput.value = circuitBoard.height;
+	widthInput.value = circuitBoard.width;
+}
+
 class CircuitData
 {
 	constructor (board)
@@ -391,4 +527,4 @@ class CircuitData
 }
 
 // And gate for test demonstration
-savedCircuit={"cells":[[{"connections":[false,true,false,true],"ant":true,"antDir":3},{"connections":[true,false,false,true],"ant":false,"antDir":1},{"connections":[true,false,true,false],"ant":false,"antDir":0},{"connections":[true,false,true,false],"ant":false,"antDir":0},{"connections":[true,false,true,false],"ant":false,"antDir":0},{"connections":[false,false,true,true],"ant":false,"antDir":0},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[true,true,false,false],"ant":false,"antDir":3},{"connections":[false,true,true,true],"ant":false,"antDir":0},{"connections":[true,false,false,true],"ant":false,"antDir":2},{"connections":[true,false,true,true],"ant":false,"antDir":2},{"connections":[false,false,true,true],"ant":false,"antDir":1},{"connections":[false,true,false,true],"ant":false,"antDir":3},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[true,false,false,true],"ant":false,"antDir":2},{"connections":[true,true,true,true],"ant":false,"antDir":3},{"connections":[true,true,true,true],"ant":false,"antDir":0},{"connections":[false,true,true,false],"ant":false,"antDir":3},{"connections":[true,true,false,true],"ant":false,"antDir":1},{"connections":[false,true,true,true],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,false],"ant":false,"antDir":3},{"connections":[true,true,false,false],"ant":false,"antDir":3},{"connections":[true,false,true,false],"ant":false,"antDir":0},{"connections":[false,true,true,false],"ant":false,"antDir":0},{"connections":[false,true,false,true],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[false,true,true,false],"ant":true,"antDir":0},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,true,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}],[{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false}]]};
+savedCircuit={"cells":[[{"connections":[false,true,false,true],"ant":true,"antDir":3},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,false,true,true],"ant":false}],[{"connections":[true,true,false,false],"ant":false},{"connections":[false,true,true,true],"ant":false},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,true],"ant":false},{"connections":[false,false,true,true],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[true,false,false,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,true],"ant":false}],[{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[false,true,true,false],"ant":true,"antDir":0},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,true,false,true],"ant":false}]]};
