@@ -1,5 +1,5 @@
 :root {
-	font-family: Book Antiqua, serif;
+	font-family: "Book Antiqua", serif;
 }
 
 .boxdiv {
@@ -114,17 +114,46 @@ label {
 
 #control-bar {
 	border-bottom: 2px solid black;
-	height: 60px;
+	flex-basis: 60px;
 	padding: 5px;
 	display: flex;
 	flex-flow: row nowrap;
-	align-items: center;
-	justify-content: space-around;
+	align-items: flex-start;
+	gap:5px;
+	justify-content: space-evenly;
+	overflow-x: clip;
 }
 
 #control-bar .separator {
 	height: 100%;
+	margin: 0;
 	border-left: 1px solid gray;
+}
+
+#control-bar > div {
+	padding-left: 10px;
+}
+
+#control-bar > div > h3 {
+	position: relative;
+	left: -10px;
+	top: -2px;
+}
+
+#control-bar-file {
+	flex-basis: 200px;
+}
+
+#control-bar-board {
+	flex-basis: 200px;
+}
+
+#control-bar-simulate {
+	/* align-self: center; */
+}
+
+.control-input {
+	width:36px;
 }
 
 #circuit-area {
@@ -151,13 +180,19 @@ canvas {
 	display: block;
 }
 
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 1226px) {
+	#build-view {
+		width: 70%;
+	}
+}
+
+@media screen and (max-width: 1056px) {
 	#build-view {
 		width: 80%;
 	}
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 928px) {
 	#tool-panel {
 		flex-basis: 108px;
 	}

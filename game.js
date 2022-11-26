@@ -216,10 +216,11 @@ window.addEventListener('load',function() {
 			}
 		},
 		loadData: function(loc) {
-			// TODO resize board to fit data
+			// resize board to fit data
 			this.height = loc.cells.length;
 			this.width = loc.cells[0].length;
 			
+			// copy data to board cells
 			for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 			{
 				let c = this.cells[y][x];
@@ -228,6 +229,8 @@ window.addEventListener('load',function() {
 				c.ant = d.ant;
 				c.antDir = d.antDir;
 			}
+			
+			// update visuals
 			this.drawCells();
 			updateSizeInputs();
 		},
@@ -355,16 +358,15 @@ class CircuitCell {
 					this.draw();
 					break;
 				case 2: /* Vertical Tunnel */
+					// TODO Rework tunnels to be properties of board and have at max 1 per board side
 					if(placeOrErase != undefined)
 					{
 						if(this.coord[0] == 0)
 						{
-							// this.vtunnel = 'toptunnel';// TODO
 							this.up = placeOrErase;
 							this.draw();
 						} else if (this.coord[0] == circuitBoard.height-1)
 						{
-							// this.vtunnel = 'bottomtunnel';// TODO
 							this.down = placeOrErase;
 							this.draw();
 						}
@@ -375,12 +377,10 @@ class CircuitCell {
 					{
 						if(this.coord[1] == 0)
 						{
-							// this.htunnel = 'lefttunnel';// TODO
 							this.left = placeOrErase;
 							this.draw();
 						} else if (this.coord[1] == circuitBoard.width-1)
 						{
-							// this.htunnel = 'righttunnel';// TODO
 							this.right = placeOrErase;
 							this.draw();
 						}

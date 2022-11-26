@@ -33,7 +33,7 @@
 			</div>
 			<div id="view-panel" class="boxdiv">
 				<div id="control-bar">
-					<div>
+					<div id="control-bar-file">
 						<h3>
 							Files:
 						</h3>
@@ -47,20 +47,23 @@
 							Clear
 						</button>
 					</div>
-					<div class="separator"></div>
-					<div>
+					<span class="separator"></span>
+					<div id="control-bar-board">
 						<h3>
 							Board:
 						</h3>
 						<label for="bheight" style="width:50px;">Height:</label>
-						<input type="number" id="control-input-bheight" name="bheight" min="2" max="20"><br>
+						<input type="number" id="control-input-bheight" class="control-input" name="bheight" min="2" max="20"><br>
 						<label for="bwidth" style="width:50px;">Width:</label>
-						<input type="number" id="control-input-bwidth" name="bwidth" min="2" max="20">
+						<input type="number" id="control-input-bwidth" class="control-input" name="bwidth" min="2" max="20">
 					</div>
-					<div class="separator"></div>
-					<button type="button" id="control-button-simulate" class="control-button">
-						Simulate!
-					</button>
+					<span class="separator"></span>
+					<div id="control-bar-simulate">
+						<h3>Simulate:</h3>
+						<button type="button" id="control-button-simulate" class="control-button">
+							Simulate!
+						</button>
+					</div>
 				</div>
 				<div id="circuit-area">
 					<table id="circuit-board">
