@@ -1,7 +1,8 @@
 var circuitBoard;
 var currentTool = 0;
-var savedCircuit;
+var savedMachines;
 var heightInput,widthInput;
+var activeTab = 'build';
 
 const PIXELRATIO = Math.round(window.devicePixelRatio) || 1;
 
@@ -12,7 +13,7 @@ const CELLRESOLUTION = CELLSIZE * PIXELRATIO;
 // Initial Setup
 window.addEventListener('load',function() {
 	// Prevent context menus when right-clicking in the build view
-	document.getElementById('build-view').addEventListener('contextmenu',function(e) {e.preventDefault()});
+	document.getElementById('center-box').addEventListener('contextmenu',function(e) {e.preventDefault()});
 	// Generate the circuit board object, which allows display and manipulation of a circuit
 	circuitBoard = {
 		table: document.getElementById('circuit-board'),
@@ -247,6 +248,27 @@ window.addEventListener('load',function() {
 	// circuitBoard.height = 5;
 	// circuitBoard.width = 6;
 	
+	savedMachines = [];
+	
+	let tabButtons = document.getElementsByClassName('tab-button');
+	for(let i=0; i<tabButtons.length; i++)
+	{
+		tabButtons[i].addEventListener('mousedown', function() {
+			if(this.dataset.tabname!=undefined && this.dataset.tabname!=activeTab)
+			{
+				for(let j=0; j<tabButtons.length; j++) if(tabButtons[j].dataset.tabname==activeTab)
+				{
+					tabButtons[j].classList.remove('tab-active');
+					break;
+				}
+				document.getElementById(activeTab+'-view').style.display = 'none';
+				activeTab = this.dataset.tabname;
+				this.classList.add('tab-active');
+				document.getElementById(activeTab+'-view').style.display = 'flex';
+			}
+		});
+	}
+	
 	let circuitArea = document.getElementById('circuit-area');
 	
 	let relPathDrawer = function () {circuitBoard.pathDrawerSelection = undefined};
@@ -275,16 +297,25 @@ window.addEventListener('load',function() {
 		circuitBoard.drawFlagged();
 	});
 	
+	let fnameInput = document.getElementById('control-input-fname');
+	fnameInput.addEventListener('change', function() {
+		this.value = this.value.trim();
+	});
+	
 	let saveButton = document.getElementById('control-button-save');
 	saveButton.addEventListener('mousedown', function() {
-		savedCircuit = new CircuitData(circuitBoard);
+		let fname = fnameInput.value.length ? fnameInput.value : fnameInput.placeholder;
+		registerMachine(fname,new CircuitData(circuitBoard));
 	});
 	
 	let loadButton = document.getElementById('control-button-load');
 	loadButton.addEventListener('mousedown', function() {
-		if(savedCircuit != undefined)
+		let fname = fnameInput.value.length ? fnameInput.value : fnameInput.placeholder;
+		let entry = savedMachines.find(item => item.name==fname);
+		if(entry == undefined) alert("No saved machine with this name could be found.");
+		else
 		{
-			circuitBoard.loadData(savedCircuit);
+			circuitBoard.loadData(entry.data);
 		}
 	});
 	
@@ -305,8 +336,42 @@ window.addEventListener('load',function() {
 	
 	updateSizeInputs();
 	
+	let machineListDisplay = document.getElementById('machine-list');	
+	/**
+	 * Takes a CircuitData object as input, generates a display element for it, and adds the pair to savedMachines,
+	 * overwriting any previous machine of the same name.
+	 */
+	function registerMachine(name,data)
+	{
+		let entry = savedMachines.find(item => item.name==name);
+		if(entry==undefined)
+		{
+			let display = document.createElement('button');
+			// display.classList.add('machine-list-item');
+			display.innerText = name;
+			display.dataset.fname = name;
+			entry = {
+				name: name,
+				data: data,
+				display: display
+			};
+			display.addEventListener('mousedown', function()
+			{
+				// Update machine-details-area with data
+				let mydata = entry;
+				console.log(mydata);// TODO
+			});
+			machineListDisplay.appendChild(display);
+			savedMachines.push(entry);
+		}
+		else
+		{
+			entry.data = data;
+		}
+	}
+	
 	// testing only
-	circuitBoard.loadData(savedCircuit);
+	circuitBoard.loadData(starterLayout);
 });
 
 /**
@@ -514,6 +579,10 @@ function updateSizeInputs()
 	widthInput.value = circuitBoard.width;
 }
 
+/**
+ * Class for storing data about a circuit. This includes the cell connections, starting ant positions,
+ * tunnel names, and description.
+ */
 class CircuitData
 {
 	constructor (board)
@@ -527,4 +596,4 @@ class CircuitData
 }
 
 // And gate for test demonstration
-savedCircuit={"cells":[[{"connections":[false,true,false,true],"ant":true,"antDir":3},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,false,true,true],"ant":false}],[{"connections":[true,true,false,false],"ant":false},{"connections":[false,true,true,true],"ant":false},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,true],"ant":false},{"connections":[false,false,true,true],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[true,false,false,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,true],"ant":false}],[{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[false,true,true,false],"ant":true,"antDir":0},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,true,false,true],"ant":false}]]};
+let starterLayout={"cells":[[{"connections":[false,true,false,true],"ant":true,"antDir":3},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,false,true,true],"ant":false}],[{"connections":[true,true,false,false],"ant":false},{"connections":[false,true,true,true],"ant":false},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,true],"ant":false},{"connections":[false,false,true,true],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[true,false,false,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,true],"ant":false}],[{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[false,true,true,false],"ant":true,"antDir":0},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,true,false,true],"ant":false}]]};

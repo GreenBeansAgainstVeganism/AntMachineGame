@@ -29,26 +29,81 @@ label {
 	display: inline-block;
 }
 
-#build-view {
-	padding: 5px;
+#center-box {
 	width: 60%;
-	height: 560px;
+	height: 580px;
 	margin: auto;
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+#tab-bar {
+	border-bottom: 2px solid black;
+	flex-basis: 30px;
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: center;
+}
+
+.tab-button {
+	padding-left: 5px;
+	padding-right: 5px;
+	border: none;
+	background: none;
+}
+
+.tab-button:hover {
+	background: yellow;
+}
+
+.tab-button.tab-active {
+	color: white;
+	background: black;
+}
+
+.tab-content {
+	padding: 5px;
+	flex-basis: 100%;
 	display: flex;
 }
 
-#build-view p {
+#center-box p {
 	margin:0;
 }
 
-#build-view h2 {
+#center-box h2 {
+	margin:0;
 	font-size: 14pt;
 }
 
-#build-view h3 {
+#center-box h3 {
 	margin:0;
 	font-size: 10pt;
 	font-style: italic;
+}
+
+#machines-panel {
+	flex-grow:1;
+	display:flex;
+	flex-flow: row nowrap;
+}
+
+#machine-list-area {
+	flex-basis: 200px;
+	border-right: 2px solid black;
+	display:flex;
+	flex-flow: column nowrap;
+}
+
+#machine-list {
+	flex-basis: 0;
+	flex-grow:1;
+	overflow-y: scroll;
+}
+
+#machine-list > button {
+	width:100%;
+	height:40px;
 }
 
 #tool-panel {
@@ -57,7 +112,7 @@ label {
 	margin-right: 5px;
 }
 
-#tool-heading {
+#machine-list-heading, #tool-heading {
 	border-bottom: 2px solid black;
 	margin: 0;
 	text-align: center;
@@ -153,7 +208,6 @@ label {
 }
 
 .control-input {
-	width:36px;
 }
 
 #circuit-area {
@@ -181,13 +235,13 @@ canvas {
 }
 
 @media screen and (max-width: 1226px) {
-	#build-view {
+	#center-box {
 		width: 70%;
 	}
 }
 
 @media screen and (max-width: 1056px) {
-	#build-view {
+	#center-box {
 		width: 80%;
 	}
 }

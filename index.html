@@ -11,63 +11,87 @@
 			<h1>Ant Machine</h1>
 			<p>A game about markets, computers, and eusocial insects.</p>
 		</header>
-		<div id="build-view" class="boxdiv">
-			<div id="tool-panel" class="boxdiv">
-				<h2 id="tool-heading">
-					Tools
-				</h2>
-				<div id="tool-list">
-					<button type="button" id="tool-button-draw" class="tool-button tool-active" data-toolid="0" title="Draw Path">
-						<img src="assets/tool_button_draw.svg" draggable="false"></img>
-					</button>
-					<button type="button" id="tool-button-ant" class="tool-button" data-toolid="1" title="Place Ants">
-						<img src="assets/ant.svg" draggable="false"></img>
-					</button>
-					<button type="button" id="tool-button-tunnel-vertical" class="tool-button" data-toolid="2" title="Vertical Tunnel">
-						<img src="assets/tool_button_tunnel.svg" draggable="false"></img>
-					</button>
-					<button type="button" id="tool-button-tunnel-horizontal" class="tool-button" data-toolid="3" title="Horizontal Tunnel">
-						<img src="assets/tool_button_tunnel.svg" draggable="false"></img>
-					</button>
+		<div id="center-box" class="boxdiv">
+			<div id="tab-bar">
+				<button type="button" id="tab-button-machines" class="tab-button" data-tabname="machines">Machines</button>
+				<button type="button" id="tab-button-build" class="tab-button tab-active" data-tabname="build">Build</button>
+			</div>
+			<div id="machines-view" class="tab-content" style="display:none;">
+				<div id="machines-panel" class="boxdiv">
+					<div id="machine-list-area">
+						<h2 id="machine-list-heading">
+							Saved Machines
+						</h2>
+						<div id="machine-list">
+							
+						</div>
+					</div>
+					<div id="machine-details-area">
+						<h2>Details</h2>
+					</div>
 				</div>
 			</div>
-			<div id="view-panel" class="boxdiv">
-				<div id="control-bar">
-					<div id="control-bar-file">
-						<h3>
-							Files:
-						</h3>
-						<button type="button" id="control-button-save" class="control-button">
-							Save
+			<div id="build-view" class="tab-content">
+				<div id="tool-panel" class="boxdiv">
+					<h2 id="tool-heading">
+						Tools
+					</h2>
+					<div id="tool-list">
+						<button type="button" id="tool-button-draw" class="tool-button tool-active" data-toolid="0" title="Draw Path">
+							<img src="assets/tool_button_draw.svg" draggable="false"></img>
 						</button>
-						<button type="button" id="control-button-load" class="control-button">
-							Load
+						<button type="button" id="tool-button-ant" class="tool-button" data-toolid="1" title="Place Ants">
+							<img src="assets/ant.svg" draggable="false"></img>
 						</button>
-						<button type="button" id="control-button-clear" class="control-button">
-							Clear
+						<button type="button" id="tool-button-tunnel-vertical" class="tool-button" data-toolid="2" title="Vertical Tunnel">
+							<img src="assets/tool_button_tunnel.svg" draggable="false"></img>
 						</button>
-					</div>
-					<span class="separator"></span>
-					<div id="control-bar-board">
-						<h3>
-							Board:
-						</h3>
-						<label for="bheight" style="width:50px;">Height:</label>
-						<input type="number" id="control-input-bheight" class="control-input" name="bheight" min="2" max="20"><br>
-						<label for="bwidth" style="width:50px;">Width:</label>
-						<input type="number" id="control-input-bwidth" class="control-input" name="bwidth" min="2" max="20">
-					</div>
-					<span class="separator"></span>
-					<div id="control-bar-simulate">
-						<h3>Simulate:</h3>
-						<button type="button" id="control-button-simulate" class="control-button">
-							Simulate!
+						<button type="button" id="tool-button-tunnel-horizontal" class="tool-button" data-toolid="3" title="Horizontal Tunnel">
+							<img src="assets/tool_button_tunnel.svg" draggable="false"></img>
 						</button>
 					</div>
 				</div>
-				<div id="circuit-area">
-					<table id="circuit-board">
-					</table>
+				<div id="view-panel" class="boxdiv">
+					<div id="control-bar">
+						<div id="control-bar-file">
+							<h3>
+								Files:
+							</h3>
+							<label for="fname">Name:</label>
+							<input type="text" id="control-input-fname" class="control-input" name="fname" placeholder="mymachine" style="width:96px;" autocomplete="off">
+							<br>
+							<button type="button" id="control-button-save" class="control-button">
+								Save
+							</button>
+							<button type="button" id="control-button-load" class="control-button">
+								Load
+							</button>
+							<button type="button" id="control-button-clear" class="control-button">
+								Clear
+							</button>
+						</div>
+						<span class="separator"></span>
+						<div id="control-bar-board">
+							<h3>
+								Board:
+							</h3>
+							<label for="bheight" style="width:50px;">Height:</label>
+							<input type="number" id="control-input-bheight" class="control-input" style="width:36px" name="bheight" min="2" max="20"><br>
+							<label for="bwidth" style="width:50px;">Width:</label>
+							<input type="number" id="control-input-bwidth" class="control-input" style="width:36px" name="bwidth" min="2" max="20">
+						</div>
+						<span class="separator"></span>
+						<div id="control-bar-simulate">
+							<h3>Simulate:</h3>
+							<button type="button" id="control-button-simulate" class="control-button">
+								Simulate!
+							</button>
+						</div>
+					</div>
+					<div id="circuit-area">
+						<table id="circuit-board">
+						</table>
+					</div>
 				</div>
 			</div>
 		</div>
