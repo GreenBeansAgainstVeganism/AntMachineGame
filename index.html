@@ -13,8 +13,8 @@
 		</header>
 		<div id="center-box" class="boxdiv">
 			<div id="tab-bar">
-				<button type="button" id="tab-button-machines" class="tab-button" data-tabname="machines">Machines</button>
 				<button type="button" id="tab-button-build" class="tab-button tab-active" data-tabname="build">Build</button>
+				<button type="button" id="tab-button-machines" class="tab-button" data-tabname="machines">Machines</button>
 			</div>
 			<div id="machines-view" class="tab-content" style="display:none;">
 				<div id="machines-panel" class="boxdiv">
@@ -22,12 +22,14 @@
 						<h2 id="machine-list-heading">
 							Saved Machines
 						</h2>
-						<div id="machine-list">
-							
-						</div>
+						<div id="machine-list"></div>
 					</div>
-					<div id="machine-details-area">
-						<h2>Details</h2>
+					<div id="machine-details-area" hidden>
+						<h2 id="machine-details-heading"></h2>
+						<!-- <p>Description:</p> -->
+						<textarea id="machine-details-description" maxlength="100" placeholder="description..."></textarea>
+						<button id="machine-details-edit-button" type="button">Edit</button>
+						<button id="machine-details-delete-button" type="button">Delete</button>
 					</div>
 				</div>
 			</div>

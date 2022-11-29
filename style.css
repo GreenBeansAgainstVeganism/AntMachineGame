@@ -29,6 +29,10 @@ label {
 	display: inline-block;
 }
 
+textarea, input{
+	font-family: Book Antiqua, serif;
+}
+
 #center-box {
 	width: 60%;
 	height: 580px;
@@ -46,8 +50,8 @@ label {
 }
 
 .tab-button {
-	padding-left: 5px;
-	padding-right: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
 	border: none;
 	background: none;
 }
@@ -59,6 +63,10 @@ label {
 .tab-button.tab-active {
 	color: white;
 	background: black;
+}
+
+.tab-button.tab-active:hover {
+	color: yellow;
 }
 
 .tab-content {
@@ -78,8 +86,8 @@ label {
 
 #center-box h3 {
 	margin:0;
-	font-size: 10pt;
-	font-style: italic;
+	font-size: 11pt;
+	font-style: oblique;
 }
 
 #machines-panel {
@@ -89,7 +97,7 @@ label {
 }
 
 #machine-list-area {
-	flex-basis: 200px;
+	flex-basis: 240px;
 	border-right: 2px solid black;
 	display:flex;
 	flex-flow: column nowrap;
@@ -104,6 +112,58 @@ label {
 #machine-list > button {
 	width:100%;
 	height:40px;
+	padding-left: 10px;
+	padding-right: 10px;
+	border: none;
+	border-bottom: 1px solid silver;
+	background: none;
+}
+
+#machine-list > button:hover {
+	background: yellow;
+}
+
+#machine-list > button.machine-details-active {
+	color: white;
+	background: black;
+}
+
+#machine-list > button.machine-details-active:hover {
+	color: yellow;
+}
+
+#machine-details-area {
+	padding: 5px;
+	flex-grow: 1;
+}
+
+#machine-details-area > h2 {
+	border-bottom: 1px solid black;
+}
+
+#machine-details-description {
+	display: block;
+	border: none;
+	resize: none;
+	font-style: italic;
+	margin-bottom: 5px;
+	margin-top: 5px;
+	width: 80%;
+	height: 80px;
+	overflow: auto;
+}
+
+#machine-details-description:hover {
+	background: #eef8ff;
+}
+
+#machine-details-description:focus {
+	outline: none;
+	background: #ddeeff;
+}
+
+#machine-details-area > button {
+	
 }
 
 #tool-panel {

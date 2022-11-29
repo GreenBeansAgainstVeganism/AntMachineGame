@@ -3,6 +3,7 @@ var currentTool = 0;
 var savedMachines;
 var heightInput,widthInput;
 var activeTab = 'build';
+var selectedMachine;
 
 const PIXELRATIO = Math.round(window.devicePixelRatio) || 1;
 
@@ -256,17 +257,26 @@ window.addEventListener('load',function() {
 		tabButtons[i].addEventListener('mousedown', function() {
 			if(this.dataset.tabname!=undefined && this.dataset.tabname!=activeTab)
 			{
-				for(let j=0; j<tabButtons.length; j++) if(tabButtons[j].dataset.tabname==activeTab)
-				{
-					tabButtons[j].classList.remove('tab-active');
-					break;
-				}
-				document.getElementById(activeTab+'-view').style.display = 'none';
-				activeTab = this.dataset.tabname;
-				this.classList.add('tab-active');
-				document.getElementById(activeTab+'-view').style.display = 'flex';
+				changeTab(this.dataset.tabname);
 			}
 		});
+	}
+	
+	function changeTab(tabname)
+	{
+		for(let j=0; j<tabButtons.length; j++) if(tabButtons[j].dataset.tabname==activeTab)
+		{
+			tabButtons[j].classList.remove('tab-active');
+			break;
+		}
+		document.getElementById(activeTab+'-view').style.display = 'none';
+		activeTab = tabname;
+		for(let j=0; j<tabButtons.length; j++) if(tabButtons[j].dataset.tabname==activeTab)
+		{
+			tabButtons[j].classList.add('tab-active');
+			break;
+		}
+		document.getElementById(activeTab+'-view').style.display = 'flex';
 	}
 	
 	let circuitArea = document.getElementById('circuit-area');
@@ -311,7 +321,7 @@ window.addEventListener('load',function() {
 	let loadButton = document.getElementById('control-button-load');
 	loadButton.addEventListener('mousedown', function() {
 		let fname = fnameInput.value.length ? fnameInput.value : fnameInput.placeholder;
-		let entry = savedMachines.find(item => item.name==fname);
+		let entry = findMachineByName(fname);
 		if(entry == undefined) alert("No saved machine with this name could be found.");
 		else
 		{
@@ -336,14 +346,21 @@ window.addEventListener('load',function() {
 	
 	updateSizeInputs();
 	
-	let machineListDisplay = document.getElementById('machine-list');	
+	let machineListDisplay = document.getElementById('machine-list');
+	let machineDetailsDisplay = {
+		box: document.getElementById('machine-details-area'),
+		heading: document.getElementById('machine-details-heading'),
+		description: document.getElementById('machine-details-description'),
+		editbutton: document.getElementById('machine-details-edit-button'),
+		deletebutton: document.getElementById('machine-details-delete-button')
+	};
 	/**
 	 * Takes a CircuitData object as input, generates a display element for it, and adds the pair to savedMachines,
 	 * overwriting any previous machine of the same name.
 	 */
 	function registerMachine(name,data)
 	{
-		let entry = savedMachines.find(item => item.name==name);
+		let entry = findMachineByName(name);
 		if(entry==undefined)
 		{
 			let display = document.createElement('button');
@@ -353,21 +370,58 @@ window.addEventListener('load',function() {
 			entry = {
 				name: name,
 				data: data,
-				display: display
+				display: display,
+				desc: ''
 			};
 			display.addEventListener('mousedown', function()
 			{
 				// Update machine-details-area with data
-				let mydata = entry;
-				console.log(mydata);// TODO
+				let prevSelected = findMachineByName(selectedMachine);
+				if(prevSelected!=undefined)
+				{
+					prevSelected.display.classList.remove('machine-details-active');
+				}
+				this.classList.add('machine-details-active');
+				
+				selectedMachine = entry.name;
+				// TODO update details pane to reflect new selected machine
+				machineDetailsDisplay.box.hidden = false;
+				machineDetailsDisplay.heading.innerText = entry.name;
+				machineDetailsDisplay.description.value = entry.desc;
 			});
 			machineListDisplay.appendChild(display);
+			
+			// TEMP sorts display order of machines alphabetically as they are added
+			sortMachineDisplay((a,b)=>a.innerText.localeCompare(b.innerText));
 			savedMachines.push(entry);
 		}
 		else
 		{
 			entry.data = data;
 		}
+	}
+	
+	machineDetailsDisplay.description.addEventListener('change', function() {
+		findMachineByName(selectedMachine).desc = this.value;
+	});
+	
+	machineDetailsDisplay.editbutton.addEventListener('mouseup', function() {
+		changeTab('build');
+		circuitBoard.loadData(findMachineByName(selectedMachine).data);
+		fnameInput.value = selectedMachine;
+	});
+	
+	machineDetailsDisplay.deletebutton.addEventListener('mouseup', function() {
+		// TODO Add confirmation dialogue before deleting a machine
+		// Remove the machine's data from savedMachines and destroys its display element
+		savedMachines.splice(findMachineIndexByName(selectedMachine),1)[0].display.remove();
+		selectedMachine = undefined;
+		machineDetailsDisplay.box.hidden = true;
+	});
+	
+	function sortMachineDisplay(compareFunction)
+	{
+		[...machineListDisplay.children].sort(compareFunction).forEach(node=>machineListDisplay.appendChild(node));
 	}
 	
 	// testing only
@@ -577,6 +631,16 @@ function updateSizeInputs()
 {
 	heightInput.value = circuitBoard.height;
 	widthInput.value = circuitBoard.width;
+}
+
+function findMachineByName(name)
+{
+	return savedMachines.find(item => item.name==name);
+}
+
+function findMachineIndexByName(name)
+{
+	return savedMachines.findIndex(item => item.name==name);
 }
 
 /**
