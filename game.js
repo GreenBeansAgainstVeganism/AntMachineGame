@@ -24,6 +24,8 @@ window.addEventListener('load',function() {
 	let fnameInput = document.getElementById('control-input-fname');
 	let heightInput = document.getElementById('control-input-bheight');
 	let widthInput = document.getElementById('control-input-bwidth');
+	let simIntervalInput = document.getElementById('control-input-simInterval');
+	let simInputInputs = [0,1,2,3].map((i) => {return document.getElementById('control-input-simInput'+i)});
 	let machineListDisplay = document.getElementById('machine-list');
 	let machineDetailsDisplay = {
 		box: document.getElementById('machine-details-area'),
@@ -40,7 +42,9 @@ window.addEventListener('load',function() {
 		data: new CircuitData(),
 		pathDrawerSelection: undefined,
 		simulation: undefined,
-		simInterval: 1000,
+		simInterval: 500,
+		simInputs: [0,0,0,0],
+		simSteps: 1,
 		simVar: undefined,
 		get height() {return this.data.height;},
 		get width() {return this.data.width;},
@@ -97,6 +101,7 @@ window.addEventListener('load',function() {
 						this.canvases.push(canvasRow);
 					}
 			}
+			this.drawCells();
 		},
 		set width(w)
 		{
@@ -155,6 +160,7 @@ window.addEventListener('load',function() {
 					// set table width
 					this.table.style.width = CELLSIZE*this.width+'px';
 			}
+			this.drawCells();
 		},
 		// creates a canvas, styles it, and adds all the appropriate event listeners.
 		generateCanvas: function(y,x){
@@ -334,7 +340,7 @@ window.addEventListener('load',function() {
 			return undefined;
 		},
 		// Create a simulation object from data, turn on simulation mode and disable tool use.
-		beginSimulation: function(right = 0,up = 0,left = 0,down = 0,interval = 1000,steps = 1)
+		beginSimulation: function()
 		{
 			this.simulation = new Simulation(this.data,true);
 			circuitArea.style.backgroundColor = 'silver';
@@ -347,14 +353,13 @@ window.addEventListener('load',function() {
 			fnameInput.disabled							= true;
 			machineDetailsDisplay.editbutton.disabled	= true;
 			
-			this.playSimulation(interval,right,up,left,down,steps);
+			this.playSimulation();
 		},
 		// Sets simulation to run on an interval
-		playSimulation: function(interval,right = 0,up = 0,left = 0,down = 0,steps = 1)
+		playSimulation: function()
 		{
-			if(interval != undefined) this.simInterval = interval;
 			simMode = 1;
-			this.simVar = window.setInterval(()=>{this.simulate(right,up,left,down,steps);},this.simInterval);
+			this.simVar = window.setInterval(()=>{this.simulate();},this.simInterval);
 		},
 		// Stops simulation running but does not end simulation mode.
 		pauseSimulation: function()
@@ -381,11 +386,16 @@ window.addEventListener('load',function() {
 			machineDetailsDisplay.editbutton.disabled	= false;
 		},
 		// Advances the circuitBoard by [steps] iterations of the simulation, then draws all cells that were modified
-		simulate: function(right = 0,up = 0,left = 0,down = 0,steps = 1)
+		simulate: function()
 		{
 			if(simMode)
 			{
-				for(let i = 0; i < steps; i++) this.simulation.simulate(right,up,left,down);
+				for(let i = 0; i < this.simSteps; i++)
+				{
+					this.simulation.simulate(...this.simInputs);
+					this.simInputs.fill(0);
+					simInputInputs.forEach((obj) => {obj.checked = false;});
+				}
 				this.drawFlagged();
 			}
 			
@@ -404,9 +414,13 @@ window.addEventListener('load',function() {
 			// resize board to fit data
 			this.height = data.height;
 			this.width = data.width;
+			console.log(this.data);
+			
+			console.log(data);
 			
 			// clone data
 			this.data = data.clone();
+			console.log(this.data);
 			
 			// update visuals
 			this.drawCells();
@@ -480,7 +494,8 @@ window.addEventListener('load',function() {
 		switch(simMode)
 		{
 			case false:
-				circuitBoard.beginSimulation(0,0,0,0,500);
+				// circuitBoard.simInputs = [0,0,1,0];
+				circuitBoard.beginSimulation();
 				this.innerText = 'Pause';
 				break;
 			case 1:
@@ -501,6 +516,22 @@ window.addEventListener('load',function() {
 			simulationStartButton.innerText = 'Start';
 		}
 	});
+	
+	simIntervalInput.value = circuitBoard.simInterval;
+	simIntervalInput.addEventListener('change',function() {
+		inputNumberFix(this);
+		circuitBoard.simInterval = this.value;
+		// refresh the simulation interval if currently running
+		if(simMode == 1)
+		{
+			circuitBoard.pauseSimulation();
+			circuitBoard.playSimulation();
+		}
+	});
+	
+	simInputInputs.forEach((obj,i) => obj.addEventListener('change',function() {
+		circuitBoard.simInputs[i] = this.checked;
+	}));
 	
 	fnameInput.addEventListener('change', function() {
 		this.value = this.value.trim();
@@ -673,8 +704,8 @@ class CircuitData
 	{
 		let o = new CircuitData();
 		o.cells = this.cells.map(row => row.map(cell => ({
-			connections: cell.connections,
-			circuit: cell.nest,
+			connections: [...cell.connections],
+			circuit: cell.circuit,
 			ant: cell.ant
 		})));
 		return o;
@@ -693,7 +724,7 @@ class CircuitData
 				this.cells = this.cells.slice(0,h);
 				
 				// erase tunnels
-				if(this.height) for(let x = 0; x < this.width; x++)
+				if(h) for(let x = 0; x < this.width; x++)
 				{
 					this.cells[h-1][x].connections[3] = 0;
 					if(this.cells[h-1][x].ant == 1) this.cells[h-1][x].ant = -1;
@@ -842,6 +873,29 @@ class Simulation
 			let oldAnt = this.ants[y][x];
 			let antsIn = 0;
 			let newAntDir = 0;
+			
+			// add incoming ants from tunnels
+			if(right && x==this.width-1 && this.circuit.cells[y][x].connections[0])
+			{
+				antsIn++;
+				newAntDir = 2;
+			}
+			if(up && y==0 && this.circuit.cells[y][x].connections[1])
+			{
+				antsIn++;
+				newAntDir = 3;
+			}
+			if(left && x==0 && this.circuit.cells[y][x].connections[2])
+			{
+				antsIn++;
+				newAntDir = 0;
+			}
+			if(down && y==this.height-1 && this.circuit.cells[y][x].connections[3])
+			{
+				antsIn++;
+				newAntDir = 1;
+			}
+			
 			// Calculate new ant
 			for(let i = 0; i < 4; i++)
 			{

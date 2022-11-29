@@ -85,12 +85,21 @@
 						<span class="separator"></span>
 						<div id="control-bar-simulate">
 							<h3>Simulate:</h3>
+							<div style="position:relative;left:180px;">
+								<label style="position:absolute;left:-64px;">Inputs:</label>
+								<input type="checkbox" id="control-input-simInput0" style="position:absolute;left:20px;">
+								<input type="checkbox" id="control-input-simInput1" style="position:absolute;top:-20px;">
+								<input type="checkbox" id="control-input-simInput2" style="position:absolute;left:-20px;">
+								<input type="checkbox" id="control-input-simInput3" style="position:absolute;top:20px;">
+							</div>
 							<button type="button" id="control-button-simulation-start" class="control-button">
 								Start
 							</button>
 							<button type="button" id="control-button-simulation-end" class="control-button">
 								End
-							</button>
+							</button><br>
+							<label for="simInterval">Interval (in ms):</label>
+							<input type="number" id="control-input-simInterval" name="simInterval" min="10" max="4000" style="width:60px">
 						</div>
 					</div>
 					<div id="circuit-area">

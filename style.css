@@ -261,15 +261,15 @@ textarea, input{
 }
 
 #control-bar-file {
-	flex-basis: 200px;
+	flex-basis: 180px;
 }
 
 #control-bar-board {
-	flex-basis: 200px;
+	flex-basis: 140px;
 }
 
 #control-bar-simulate {
-	flex-basis: 120px;
+	flex-basis: 240px;
 }
 
 .control-input {
