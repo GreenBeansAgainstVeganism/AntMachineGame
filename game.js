@@ -986,18 +986,18 @@ class Simulation
 		{
 			// compute antSpread for this cell
 			
+			let cell = this.circuit.cells[y][x];
 			if(this.subSimulations[y][x]!=undefined)
 			{
 				// cell has a nested circuit
 				
-				// Recursively call simulate on this circuit and set antSpread for this cell to the result
-				antSpread[y][x] = this.subSimulations[y][x].simulate();
+				// Recursively call simulate on this circuit and set antSpread for this cell to the result (andMapped with this cell's connections)
+				antSpread[y][x] = this.subSimulations[y][x].simulate().map((n,i) => (n&&cell.connections[i]));
 				continue;
 			}
 			
 			// Handle spreading for normal tiles
 			let ant = this.ants[y][x];
-			let cell = this.circuit.cells[y][x];
 			if(ant != -1)
 			{
 				// cell has an ant

@@ -309,6 +309,13 @@ canvas {
 	display: block;
 }
 
+footer {
+	margin: auto;
+	width: 60%;
+	margin-bottom: 40px;
+	line-height: 1.4;
+}
+
 #scroll-info-indicator {
 	position: absolute;
 	left: 20px;
@@ -323,13 +330,13 @@ canvas {
 }
 
 @media screen and (max-width: 1323px) {
-	#center-box {
+	#center-box, footer{
 		width: 70%;
 	}
 }
 
 @media screen and (max-width: 1153px) {
-	#center-box {
+	#center-box, footer {
 		width: 80%;
 	}
 }
