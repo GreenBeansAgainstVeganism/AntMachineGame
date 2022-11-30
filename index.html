@@ -9,7 +9,7 @@
 	<body>
 		<header>
 			<h1>Ant Machine</h1>
-			<p>A game about logic, computers, and eusocial insects.</p>
+			<p>A game about simulations, computers, and eusocial insects.</p>
 		</header>
 		<div id="center-box" class="boxdiv">
 			<div id="tab-bar">
@@ -110,5 +110,40 @@
 				</div>
 			</div>
 		</div>
+		<div id="scroll-info-indicator">
+			Scroll for Info &#129095;
+		</div>
+		<footer style="margin:auto;width:60%;margin-bottom:40px;">
+			<h2>
+				Info:
+			</h2>
+			<p>
+				Ant Machine is an experimental video game where you can build your own complex logic systems with nothing more than lines and ants. Part of the experience is mucking about and piecing together how things work, but I will lay out the main rules that govern a machine here:
+			</p>
+			<ol>
+				<li>A machine is simulated in steps.</li>
+				<li>Each step, every ant in the system moves forward one cell, (or perishes if it has nowhere to go).</li>
+				<li>If there are multiple paths an ant can take, it will multiply and travel down all of them.</li>
+				<li>If two or more ants enter the same cell at once, they collide and die.</li>
+			</ol>
+			<p>
+				Apart from these rules, machines can also be nested inside one another. Ants entering a nested machine from outside will appear at the tunnels on that side of the machine's interior, and ants exiting from any tunnels inside the machine will likewise appear outside at the respective face, (although multiple ants exiting the same side of a machine at once will cause a collision).
+			</p>
+			<p>
+				With this simple set of rules, although I don't have a formal proof, it is possible to build a machine to compute anything that a modern computer can. In other words, this system is "Turing Complete". I doubt anyone will feel inclined to waste so much time as to actually build a machine like that, but one cannot deny that it is an interesting fact, nonetheless. That is, at least, granted that one is a nerdy Computer Science student like me who grew up on other Turing Complete games like Minecraft and Baba is You.
+			</p>
+			<p>
+				This project was actually inspired by the redstone mechanics in Minecraft. I am routinely impressed by what the game's more technically-minded community has been able to construct using just a few simple components, ranging from the early days of piston doors and flying machines to the recently achieved holy grail of redstone engineering: <a href="https://www.youtube.com/watch?v=-BP7DhHTU-I">Minecraft in Minecraft</a>.
+			</p>
+			<p>
+				What I love about redstone is that through Minecraft's popularity, it's become one of the most common ways that non-computery people are first introduced to very computery concepts like logic gates and latches. I wanted to try my hand at creating a game that would motivate players in a similar way to play around with these concepts and learn to think like a computer engineer.
+			</p>
+			<p>
+				The game, in its present state, is far from finished, being not much more than a technical demo. In the future, I hope to continue this project and add more game-like mechanics like currency, resources, markets and upgrades, and maybe a plot to motivate and guide players in their technological pursuits, as well as encourage them to optimize their designs as much as possible.
+			</p>
+			<p>
+				For now, try making a machine that only lets ants through in one direction, or an AND gate for a fun challenge!
+			</p>
+		</footer>
 	</body>
 </html>

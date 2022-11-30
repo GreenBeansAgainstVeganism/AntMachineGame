@@ -1,5 +1,6 @@
 var circuitBoard;
 var currentTool = 0;
+var currentMachine = 0;
 var savedMachines;
 var activeTab = 'build';
 var selectedMachine;
@@ -18,6 +19,8 @@ window.addEventListener('load',function() {
 	document.getElementById('center-box').addEventListener('contextmenu',function(e) {e.preventDefault()});
 	
 	// Pull elements from document now so we don't need to do it repeatedly later
+	let toolList = document.getElementById('tool-list');
+	let toolButtons = [...document.getElementsByClassName('tool-button')];
 	let circuitArea = document.getElementById('circuit-area');
 	let clearButton = document.getElementById('control-button-clear');
 	let loadButton = document.getElementById('control-button-load');
@@ -245,15 +248,40 @@ window.addEventListener('load',function() {
 							}
 						}
 						break;
-					default:
-						// Biscuits
+					case 4: /* Nested Machines */
+						if(placeOrErase)
+						{
+							cell.circuit = currentMachine;
+							let machine = findMachineById(currentMachine);
+							this.canvases[y][x].title = `Nested Machine: ${machine.name}\n${machine.desc}`;
+							this.drawCell(y,x);
+						}
+						else if(placeOrErase != undefined)
+						{
+							cell.circuit = -1;
+							this.canvases[y][x].title = '';
+							this.drawCell(y,x);
+						}
 				}
 			});
 			canv.addEventListener('mouseover',(e) => {
 				// Cancel this event if simulation is running.
 				if(simMode) return;
 				
+				// find the associated cell data
 				let cell = this.data.cells[y][x];
+				
+				// Update cell title
+				if(cell.circuit!=-1)
+				{
+					let machine = findMachineById(cell.circuit);
+					this.canvases[y][x].title = `Nested Machine: ${machine.name}\n${machine.desc}`;
+				}
+				else
+				{
+					this.canvases[y][x].title = '';
+				}
+				
 				if(currentTool==0 && this.pathDrawerSelection != undefined)
 				{
 					// Set to false if right button is pressed and/or shift key is held, otherwise set to true if left button is pressed and else undefined
@@ -325,6 +353,18 @@ window.addEventListener('load',function() {
 				ctx.drawImage(IMGANT,-30*PIXELRATIO,-17.5*PIXELRATIO,IMGANT.width/3*PIXELRATIO,IMGANT.height/3*PIXELRATIO);
 			}
 			ctx.restore();
+			
+			// Draw circuit box
+			if(cell.circuit != -1)
+			{
+				ctx.fillStyle = 'silver';
+				ctx.fillRect(m/4,m/4,m*1.5,m*1.5);
+				ctx.strokeRect(m/4,m/4,m*1.5,m*1.5);
+				ctx.fillStyle = 'black';
+				ctx.textAlign = 'center';
+				ctx.font = (10*PIXELRATIO)+'px Book Antiqua, serif';
+				ctx.fillText(findMachineById(cell.circuit).name,m,m,m*1.5-5*PIXELRATIO);
+			}
 		},
 		// Draw every cell in a range
 		drawCells: function(x1=0,y1=0,x2=this.width,y2=this.height) {
@@ -433,6 +473,7 @@ window.addEventListener('load',function() {
 			{
 				this.data.cells[y][x].connections = [0,0,0,0];
 				this.data.cells[y][x].ant = -1;
+				this.data.cells[y][x].circuit = -1;
 			}
 			this.drawCells();
 		}
@@ -475,13 +516,12 @@ window.addEventListener('load',function() {
 	circuitArea.addEventListener('mouseup',relPathDrawer);
 	circuitArea.addEventListener('mouseleave',relPathDrawer);
 	
-	let toolButtons = document.getElementsByClassName('tool-button');
 	for(let i=0; i<toolButtons.length; i++)
 	{
 		toolButtons[i].addEventListener('mousedown', function() {
 			if(this.dataset.toolid!=undefined)
 			{
-				for(let j=0; j<toolButtons.length; j++) if(toolButtons[j].dataset.toolid==currentTool) {
+				for(let j=0; j<toolButtons.length; j++) if(toolButtons[j].classList.contains('tool-active')) {
 					toolButtons[j].classList.remove('tool-active');
 					break;
 				}
@@ -541,6 +581,16 @@ window.addEventListener('load',function() {
 	
 	saveButton.addEventListener('mousedown', function() {
 		let fname = fnameInput.value.length ? fnameInput.value : fnameInput.placeholder;
+		let machine = findMachineByName(fname);
+		
+		// if this circuit currently contains a reference to the machine it is being saved as
+		if(machine != undefined && circuitBoard.data.containedCircuits()[machine.id])
+		{
+			// cancel the action and alert the user that they are trying to create a recursively defined machine
+			alert('Unable to save. Saving this circuit with this name would create a recursively defined machine.');
+			return;
+		}
+		
 		registerMachine(fname,circuitBoard.data.clone());
 	});
 	
@@ -577,7 +627,10 @@ window.addEventListener('load',function() {
 		let entry = findMachineByName(name);
 		if(entry==undefined)
 		{
+			// Generate a list button for the machine in the machines tab
+			
 			let display = document.createElement('button');
+			let tool = document.createElement('button');
 			// display.classList.add('machine-list-item');
 			display.innerText = name;
 			display.dataset.fname = name;
@@ -586,20 +639,20 @@ window.addEventListener('load',function() {
 				id: machineIdCounter++,
 				data: data,
 				display: display,
+				toolbutton: tool,
 				desc: ''
 			};
 			display.addEventListener('mousedown', function()
 			{
 				// Update machine-details-area with data
-				let prevSelected = findMachineByName(selectedMachine);
+				let prevSelected = findMachineById(selectedMachine);
 				if(prevSelected!=undefined)
 				{
 					prevSelected.display.classList.remove('machine-details-active');
 				}
 				this.classList.add('machine-details-active');
 				
-				selectedMachine = entry.name;
-				// TODO update details pane to reflect new selected machine
+				selectedMachine = entry.id;
 				machineDetailsDisplay.box.hidden = false;
 				machineDetailsDisplay.heading.innerText = entry.name;
 				machineDetailsDisplay.description.value = entry.desc;
@@ -609,6 +662,31 @@ window.addEventListener('load',function() {
 			// TEMP sorts display order of machines alphabetically as they are added
 			sortMachineDisplay((a,b)=>a.innerText.localeCompare(b.innerText));
 			savedMachines.push(entry);
+			
+			// Generate a tool button to add the machine as a nested circuit
+			tool.type = 'button';
+			tool.id = 'tool-button-nested-machine-'+entry.id;
+			tool.classList.add('tool-button');
+			tool.dataset.toolid = 4;
+			tool.dataset.machineid = entry.id;
+			tool.title = 'Nested Machine: '+entry.name;
+			tool.innerText = entry.name;
+			
+			tool.addEventListener('mousedown', function() {
+				if(this.dataset.toolid!=undefined)
+				{
+					for(let j=0; j<toolButtons.length; j++) if(toolButtons[j].classList.contains('tool-active')) {
+						toolButtons[j].classList.remove('tool-active');
+						break;
+					}
+					currentTool = Number(this.dataset.toolid);
+					currentMachine = Number(this.dataset.machineid);
+					this.classList.add('tool-active');
+				}
+			});
+			
+			toolButtons.push(tool);
+			toolList.appendChild(tool);
 		}
 		else
 		{
@@ -617,19 +695,26 @@ window.addEventListener('load',function() {
 	}
 	
 	machineDetailsDisplay.description.addEventListener('change', function() {
-		findMachineByName(selectedMachine).desc = this.value;
+		let machine = findMachineById(selectedMachine)
+		machine.desc = this.value;
+		machine.toolbutton.title = `Nested Machine: ${machine.name}\n${machine.desc}`
 	});
 	
 	machineDetailsDisplay.editbutton.addEventListener('mouseup', function() {
 		changeTab('build');
-		circuitBoard.loadData(findMachineByName(selectedMachine).data);
-		fnameInput.value = selectedMachine;
+		let machine = findMachineById(selectedMachine)
+		circuitBoard.loadData(machine.data);
+		fnameInput.value = machine.name;
 	});
 	
 	machineDetailsDisplay.deletebutton.addEventListener('mouseup', function() {
 		// TODO Add confirmation dialogue before deleting a machine
-		// Remove the machine's data from savedMachines and destroys its display element
-		savedMachines.splice(findMachineIndexByName(selectedMachine),1)[0].display.remove();
+		// Remove the machine's data from savedMachines and destroys its display elements
+		let machine = savedMachines.splice(findMachineIndexById(selectedMachine),1)[0];
+		machine.display.remove();
+		machine.toolbutton.remove();
+		if(currentTool == 4 && currentMachine == selectedMachine) currentTool = undefined;
+		
 		selectedMachine = undefined;
 		machineDetailsDisplay.box.hidden = true;
 	});
@@ -646,6 +731,20 @@ window.addEventListener('load',function() {
 	}
 	// testing only
 	//circuitBoard.loadData(starterLayout);
+	let scrollInfoIndicator = document.getElementById('scroll-info-indicator');
+	scrollInfoIndicator.classList.add('up');
+	window.onscroll = () => {
+		console.log('hi');
+		if(window.scrollY == 0)
+		{
+			scrollInfoIndicator.classList.add('up');
+		}
+		else
+		{
+			scrollInfoIndicator.classList.remove('up');
+		}
+	};
+	
 });
 
 function dirToCoord(dir)
@@ -673,6 +772,11 @@ function findMachineById(id)
 function findMachineByName(name)
 {
 	return savedMachines.find(item => item.name==name);
+}
+
+function findMachineIndexById(id)
+{
+	return savedMachines.findIndex(item => item.id==id);
 }
 
 function findMachineIndexByName(name)
@@ -717,6 +821,40 @@ class CircuitData
 			ant: cell.ant
 		})));
 		return o;
+	}
+	
+	/**
+	 * Recursively tallys every instance of a nested machine within this circuit, returning them as an array of machineid/quantity pairs.
+	 * If the machine is discovered to have a recursive definition, this method returns undefined;
+	 * Dynamically stores already computed subtallies to improve efficiency.
+	 * 'caller' and 'subtallies' are used solely to help with recursion and should be left unspecified by external calls.
+	 */
+	containedCircuits(subtallies = [],caller = this)
+	{
+		
+		// Array of quantities to return as result
+		let tally = new Array(machineIdCounter).fill(0);
+		
+		for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
+		{
+			let c = this.cells[y][x].circuit;
+			if(c != -1)
+			{
+				tally[c]++;
+				// if this machine has not been tallied yet
+				if(subtallies[c] == undefined)
+				{
+					let data = findMachineById(c).data;
+					// if machine points to the exact same machine as the original caller, this machine is recursively defined and this process must be cut short.
+					if(data == caller) return undefined;
+					// recursively call containedCircuits() on nested machine
+					subtallies[c] = data.containedCircuits(subtallies,caller);
+					if(subtallies[c] == undefined) return undefined;
+				}
+				tally = tally.map((n,i) => (n+subtallies[c][i]));
+			}
+		}
+		return tally;
 	}
 	
 	get height() {return this.cells.length;}
@@ -824,7 +962,7 @@ class Simulation
 		this.ants = circuit.cells.map(row => row.map(cell => cell.ant));
 		// Recursively create a new simulation object for every cell that contains a circuit.
 		this.subSimulations = circuit.cells.map(row => row.map(cell => (
-			cell.circuit==-1 ? undefined : new Simulation(findMachineById(savedMachines).data)
+			cell.circuit==-1 ? undefined : new Simulation(findMachineById(cell.circuit).data)
 			)));
 		this.age = 0;
 		this.inputs = [0,0,0,0]; // Represents the incoming ants for the next step of simulation.
@@ -843,12 +981,19 @@ class Simulation
 		
 		// populate antSpread
 		
+		// for each cell
 		for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 		{
-			// for each cell
+			// compute antSpread for this cell
 			
-			// TODO if cell contains a nested circuit, recursively call simulate on it
-			
+			if(this.subSimulations[y][x]!=undefined)
+			{
+				// cell has a nested circuit
+				
+				// Recursively call simulate on this circuit and set antSpread for this cell to the result
+				antSpread[y][x] = this.subSimulations[y][x].simulate();
+				continue;
+			}
 			
 			// Handle spreading for normal tiles
 			let ant = this.ants[y][x];
@@ -859,15 +1004,16 @@ class Simulation
 				for(let i = 0; i < 4; i++)
 				{
 					// for each direction
+					
+					// if cell has a connection in this direction and the ant is not facing away
 					if(cell.connections[i] && i != (ant+2)%4)
 					{
-						// spread ant
+						// spread an ant
 						
 						let [dy,dx] = dirToCoord(i);
 						// console.log(`attempting spread from ${[y,x]} to ${[y+dy,x+dx]}`);
 						
 						antSpread[y][x][i] = 1;
-						// TODO Add tunnel functionality
 					}
 				}
 			}
@@ -875,74 +1021,104 @@ class Simulation
 		
 		// interpret results and update ants
 		
+		// for each cell
 		for(let x = 0; x < this.width; x++) for(let y = 0; y < this.height; y++)
 		{
+			// determine what happens to this cell
 			
-			// TODO Handle tiles with nested circuits
-			
-			// Handle normal tiles
-			
-			let oldAnt = this.ants[y][x];
-			let antsIn = 0;
-			let newAntDir = 0;
-			
-			// add incoming ants from tunnels
-			if(this.inputs[0] && x==this.width-1 && this.circuit.cells[y][x].connections[0])
+			let subSim = this.subSimulations[y][x];
+			if(subSim!=undefined)
 			{
-				antsIn++;
-				newAntDir = 2;
-			}
-			if(this.inputs[1] && y==0 && this.circuit.cells[y][x].connections[1])
-			{
-				antsIn++;
-				newAntDir = 3;
-			}
-			if(this.inputs[2] && x==0 && this.circuit.cells[y][x].connections[2])
-			{
-				antsIn++;
-				newAntDir = 0;
-			}
-			if(this.inputs[3] && y==this.height-1 && this.circuit.cells[y][x].connections[3])
-			{
-				antsIn++;
-				newAntDir = 1;
-			}
-			
-			// Calculate new ant
-			for(let i = 0; i < 4; i++)
-			{
-				// for each direction
+				// Handle tiles with nested circuits
 				
-				let [dy,dx] = dirToCoord(i);
-				
-				// ignore directions that go off the table
-				if(y+dy < 0 || y+dy >= this.height || x+dx < 0 || x+dx >= this.width) continue;
-				
-				if(antSpread[y+dy][x+dx][(i+2)%4] && !antSpread[y][x][i])
+				for(let i = 0; i < 4; i++)
 				{
-					// console.log(`recieving spread from ${[y+dy,x+dx]} to ${[y,x]}`);
-					antsIn++;
-					newAntDir = (i+2)%4;
+					// for each direction
+					
+					let [dy,dx] = dirToCoord(i);
+					
+					// ignore directions that go off the table
+					if(y+dy < 0 || y+dy >= this.height || x+dx < 0 || x+dx >= this.width) continue;
+					
+					// if there is an ant spreading towards us from this direction, and we are not spreading in this direction
+					if(antSpread[y+dy][x+dx][(i+2)%4] && !antSpread[y][x][i])
+					{
+						// log the incoming ant in the sub-simulation's inputs for next step
+						subSim.inputs[i] = 1;
+					}
 				}
-			}
-			
-			// If exactly one ant has spread into this space, add an ant next step
-			if(antsIn == 1)
-			{
-				this.ants[y][x] = newAntDir;
+				// this is where we would flag circuits for redrawing if they had any visual changes to redraw
 			}
 			else
 			{
-				this.ants[y][x] = -1;
+				// Handle normal tiles
+				
+				let oldAnt = this.ants[y][x];
+				let antsIn = 0;
+				let newAntDir = 0;
+				
+				// add incoming ants from tunnels
+				if(this.inputs[0] && x==this.width-1 && this.circuit.cells[y][x].connections[0])
+				{
+					antsIn++;
+					newAntDir = 2;
+				}
+				if(this.inputs[1] && y==0 && this.circuit.cells[y][x].connections[1])
+				{
+					antsIn++;
+					newAntDir = 3;
+				}
+				if(this.inputs[2] && x==0 && this.circuit.cells[y][x].connections[2])
+				{
+					antsIn++;
+					newAntDir = 0;
+				}
+				if(this.inputs[3] && y==this.height-1 && this.circuit.cells[y][x].connections[3])
+				{
+					antsIn++;
+					newAntDir = 1;
+				}
+				
+				// Calculate new ant
+				for(let i = 0; i < 4; i++)
+				{
+					// for each direction
+					
+					let [dy,dx] = dirToCoord(i);
+					
+					// ignore directions that go off the table
+					if(y+dy < 0 || y+dy >= this.height || x+dx < 0 || x+dx >= this.width) continue;
+					
+					// if there is an ant spreading towards us from this direction, and we are not spreading in this direction
+					if(antSpread[y+dy][x+dx][(i+2)%4] && !antSpread[y][x][i])
+					{
+						// recieve the ant
+						// console.log(`recieving spread from ${[y+dy,x+dx]} to ${[y,x]}`);
+						antsIn++;
+						newAntDir = (i+2)%4;
+					}
+				}
+				
+				// If exactly one ant has spread into this space, add an ant next step
+				if(antsIn == 1)
+				{
+					this.ants[y][x] = newAntDir;
+				}
+				else // Otherwise they collide and disappear
+				{
+					this.ants[y][x] = -1;
+				}
+				// Flag cell for redrawing if old ant is not equal to new ant
+				if(this.doDrawFlags && this.ants[y][x] != oldAnt) this.drawFlags[y][x] = true;
 			}
-			// Flag cell for redrawing if old ant is not equal to new ant
-			if(this.doDrawFlags && this.ants[y][x] != oldAnt) this.drawFlags[y][x] = true;
 			
 		}
 		
+		// housekeeping
 		this.age++;
 		this.inputs.fill(0);
-		// TODO return the outputs of tunnels
+		
+		// return the outputs of tunnels
 		let outputs = [
 			antSpread.map(row => row[this.width-1][0]),
 			antSpread[0].map(cell => cell[1]),

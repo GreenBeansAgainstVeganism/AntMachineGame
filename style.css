@@ -172,9 +172,11 @@ textarea, input{
 }
 
 #tool-panel {
-	flex-basis: 212px;
+	flex-basis: 229px;
 	flex-shrink: 0;
 	margin-right: 5px;
+	display: flex;
+	flex-flow: column nowrap;
 }
 
 #machine-list-heading, #tool-heading {
@@ -183,11 +185,18 @@ textarea, input{
 	text-align: center;
 }
 
+#tool-heading {
+	flex-basis: 20px;
+}
+
 #tool-list {
 	padding: 2px;
+	flex-grow: 1;
+	flex-basis: 0;
 	display: flex;
 	flex-flow: row wrap;
-	align-content: flex-start;	
+	align-content: flex-start;
+	overflow-y: scroll;
 }
 
 .tool-button {
@@ -300,13 +309,26 @@ canvas {
 	display: block;
 }
 
-@media screen and (max-width: 1306px) {
+#scroll-info-indicator {
+	position: absolute;
+	left: 20px;
+	top: 720px;
+	opacity: 0;
+	transition: top 1s, opacity 1s;
+}
+
+#scroll-info-indicator.up {
+	top: 680px;
+	opacity: 1;
+}
+
+@media screen and (max-width: 1323px) {
 	#center-box {
 		width: 70%;
 	}
 }
 
-@media screen and (max-width: 1136px) {
+@media screen and (max-width: 1153px) {
 	#center-box {
 		width: 80%;
 	}
