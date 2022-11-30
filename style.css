@@ -261,11 +261,11 @@ textarea, input{
 }
 
 #control-bar-file {
-	flex-basis: 180px;
+	flex-basis: 160px;
 }
 
 #control-bar-board {
-	flex-basis: 140px;
+	flex-basis: 110px;
 }
 
 #control-bar-simulate {
@@ -300,13 +300,13 @@ canvas {
 	display: block;
 }
 
-@media screen and (max-width: 1226px) {
+@media screen and (max-width: 1306px) {
 	#center-box {
 		width: 70%;
 	}
 }
 
-@media screen and (max-width: 1056px) {
+@media screen and (max-width: 1136px) {
 	#center-box {
 		width: 80%;
 	}

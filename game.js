@@ -4,6 +4,7 @@ var savedMachines;
 var activeTab = 'build';
 var selectedMachine;
 var simMode = false;
+var machineIdCounter = 0;
 
 const PIXELRATIO = Math.round(window.devicePixelRatio) || 1;
 
@@ -16,7 +17,7 @@ window.addEventListener('load',function() {
 	// Prevent context menus when right-clicking in the center box
 	document.getElementById('center-box').addEventListener('contextmenu',function(e) {e.preventDefault()});
 	
-	
+	// Pull elements from document now so we don't need to do it repeatedly later
 	let circuitArea = document.getElementById('circuit-area');
 	let clearButton = document.getElementById('control-button-clear');
 	let loadButton = document.getElementById('control-button-load');
@@ -392,7 +393,8 @@ window.addEventListener('load',function() {
 			{
 				for(let i = 0; i < this.simSteps; i++)
 				{
-					this.simulation.simulate(...this.simInputs);
+					this.simulation.inputs = this.simInputs;
+					this.simulation.simulate();
 					this.simInputs.fill(0);
 					simInputInputs.forEach((obj) => {obj.checked = false;});
 				}
@@ -581,6 +583,7 @@ window.addEventListener('load',function() {
 			display.dataset.fname = name;
 			entry = {
 				name: name,
+				id: machineIdCounter++,
 				data: data,
 				display: display,
 				desc: ''
@@ -660,6 +663,11 @@ function dirToCoord(dir)
 function inputNumberFix(obj)
 {
 	obj.value = Math.min(Math.max(Math.trunc(obj.value),obj.min),obj.max)
+}
+
+function findMachineById(id)
+{
+	return savedMachines.find(item => item.id==id);
 }
 
 function findMachineByName(name)
@@ -814,17 +822,21 @@ class Simulation
 		this.doDrawFlags = doDrawFlags==true;
 		this.circuit = circuit;
 		this.ants = circuit.cells.map(row => row.map(cell => cell.ant));
+		// Recursively create a new simulation object for every cell that contains a circuit.
+		this.subSimulations = circuit.cells.map(row => row.map(cell => (
+			cell.circuit==-1 ? undefined : new Simulation(findMachineById(savedMachines).data)
+			)));
 		this.age = 0;
+		this.inputs = [0,0,0,0]; // Represents the incoming ants for the next step of simulation.
 		this.height = this.circuit.height;
 		this.width = this.circuit.width;
 		if(this.doDrawFlags) this.drawFlags = new Array(this.height).fill(0).map(() => []);
 	}
 	
 	/* Runs one step of simulation on this circuit, updating ant positions.
-	 * Takes 4 inputs corresponding to whether or not an ant should spawn at each of the 4 tunnels.
 	 * Returns an array of 4 booleans corresponding to whether or not an ant exited at each of the 4 tunnels.
 	 */
-	simulate(right,up,left,down)
+	simulate()
 	{
 		// Create a temporary array to store the outgoing ants in each direction for every tile on the circuit.
 		let antSpread = new Array(this.height).fill(0).map(() => new Array(this.width).fill(0).map(() => [0,0,0,0]));
@@ -875,22 +887,22 @@ class Simulation
 			let newAntDir = 0;
 			
 			// add incoming ants from tunnels
-			if(right && x==this.width-1 && this.circuit.cells[y][x].connections[0])
+			if(this.inputs[0] && x==this.width-1 && this.circuit.cells[y][x].connections[0])
 			{
 				antsIn++;
 				newAntDir = 2;
 			}
-			if(up && y==0 && this.circuit.cells[y][x].connections[1])
+			if(this.inputs[1] && y==0 && this.circuit.cells[y][x].connections[1])
 			{
 				antsIn++;
 				newAntDir = 3;
 			}
-			if(left && x==0 && this.circuit.cells[y][x].connections[2])
+			if(this.inputs[2] && x==0 && this.circuit.cells[y][x].connections[2])
 			{
 				antsIn++;
 				newAntDir = 0;
 			}
-			if(down && y==this.height-1 && this.circuit.cells[y][x].connections[3])
+			if(this.inputs[3] && y==this.height-1 && this.circuit.cells[y][x].connections[3])
 			{
 				antsIn++;
 				newAntDir = 1;
@@ -928,7 +940,17 @@ class Simulation
 			
 		}
 		
+		this.age++;
+		this.inputs.fill(0);
 		// TODO return the outputs of tunnels
+		let outputs = [
+			antSpread.map(row => row[this.width-1][0]),
+			antSpread[0].map(cell => cell[1]),
+			antSpread.map(row => row[0][2]),
+			antSpread[this.height-1].map(cell => cell[3])
+		].map(a => a.reduce((a,b) => (a^b), 0));
+		if(outputs.includes(1)) console.log(outputs);
+		return outputs;
 	}
 }
 
