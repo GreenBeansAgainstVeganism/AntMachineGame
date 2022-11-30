@@ -131,7 +131,7 @@
 				<li>A machine is simulated in steps.</li>
 				<li>Each step, every ant in the system moves forward one cell, (or perishes if it has nowhere to go).</li>
 				<li>If there are multiple paths an ant can take, it will multiply and travel down all of them.</li>
-				<li>If two or more ants enter the same cell at once, they collide and die.</li>
+				<li>If two or more ants enter the same cell at once, they collide and die. (This also applies if two ants pass each other going opposite directions on the same path.)</li>
 			</ol>
 			<p>
 				Apart from these rules, machines can also be nested inside one another. Ants entering a nested machine from outside will appear at the tunnels on that side of the machine's interior, and ants exiting from any tunnels inside the machine will likewise appear outside at the respective face, (although multiple ants exiting the same side of a machine at once will cause a collision).
