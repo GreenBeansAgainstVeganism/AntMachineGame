@@ -1,7 +1,7 @@
 var circuitBoard;
 var currentTool = 0;
 var currentMachine = 0;
-var savedMachines;
+var savedMachines = [];
 var activeTab = 'build';
 var selectedMachine;
 var simMode = false;
@@ -12,6 +12,7 @@ const PIXELRATIO = Math.round(window.devicePixelRatio) || 1;
 const IMGANT = (img => {img.src = 'assets/ant.png'; return img})(document.createElement('img'));
 const CELLSIZE = 80;
 const CELLRESOLUTION = CELLSIZE * PIXELRATIO;
+const LOADSAVE = true;
 
 // Initial Setup
 window.addEventListener('load',function() {
@@ -19,6 +20,9 @@ window.addEventListener('load',function() {
 	document.getElementById('center-box').addEventListener('contextmenu',function(e) {e.preventDefault()});
 	
 	// Pull elements from document now so we don't need to do it repeatedly later
+	let gameSaveButton = document.getElementById('save-game-button');
+	let gameLoadButton = document.getElementById('load-game-button');
+	let gameResetButton = document.getElementById('reset-game-button');
 	let toolList = document.getElementById('tool-list');
 	let toolButtons = [...document.getElementsByClassName('tool-button')];
 	let circuitArea = document.getElementById('circuit-area');
@@ -38,6 +42,8 @@ window.addEventListener('load',function() {
 		editbutton: document.getElementById('machine-details-edit-button'),
 		deletebutton: document.getElementById('machine-details-delete-button')
 	};
+	
+	
 	// Generate the circuit board object, which allows display and manipulation of a circuit
 	circuitBoard = {
 		table: document.getElementById('circuit-board'),
@@ -196,7 +202,6 @@ window.addEventListener('load',function() {
 						if(placeOrErase && cell.connections.includes(true))
 						{
 							// left click is pressed
-							console.log('ant press');
 							if(cell.ant!=-1)
 							{
 								cell.ant = (cell.ant + 1) % 4;
@@ -456,13 +461,9 @@ window.addEventListener('load',function() {
 			// resize board to fit data
 			this.height = data.height;
 			this.width = data.width;
-			console.log(this.data);
-			
-			console.log(data);
 			
 			// clone data
-			this.data = data.clone();
-			console.log(this.data);
+			this.data = CircuitData.clone(data);
 			
 			// update visuals
 			this.drawCells();
@@ -481,7 +482,39 @@ window.addEventListener('load',function() {
 	circuitBoard.height = 5;
 	circuitBoard.width = 6;
 	
-	savedMachines = [];
+	// Load save data
+	if(LOADSAVE)
+	{
+		let gameData = localStorage.getItem('savedMachines');
+		if(gameData != null)
+		{
+			gameData = JSON.parse(gameData);
+			gameData.forEach(machine => {
+				let m = registerMachine(machine.name,CircuitData.clone(machine.data));
+				m.desc = machine.desc;
+			});
+		}
+		gameData = localStorage.getItem('openCircuit');
+		if(gameData != null)
+		{
+			circuitBoard.loadData(CircuitData.clone(JSON.parse(gameData)));
+		}
+	}
+	
+	gameSaveButton.addEventListener('mouseup', function() {
+		localStorage.setItem('savedMachines',JSON.stringify(savedMachines));
+		localStorage.setItem('openCircuit',JSON.stringify(circuitBoard.data));
+	});
+	
+	gameLoadButton.addEventListener('mouseup', function() {
+		window.location.reload();
+	});
+	
+	gameResetButton.addEventListener('mouseup', function() {
+		// TODO
+		localStorage.clear();
+		window.location.reload();
+	});
 	
 	let tabButtons = document.getElementsByClassName('tab-button');
 	for(let i=0; i<tabButtons.length; i++)
@@ -591,7 +624,7 @@ window.addEventListener('load',function() {
 			return;
 		}
 		
-		registerMachine(fname,circuitBoard.data.clone());
+		registerMachine(fname,CircuitData.clone(circuitBoard.data));
 	});
 	
 	loadButton.addEventListener('mousedown', function() {
@@ -692,6 +725,7 @@ window.addEventListener('load',function() {
 		{
 			entry.data = data;
 		}
+		return entry;
 	}
 	
 	machineDetailsDisplay.description.addEventListener('change', function() {
@@ -710,14 +744,19 @@ window.addEventListener('load',function() {
 	machineDetailsDisplay.deletebutton.addEventListener('mouseup', function() {
 		// TODO Add confirmation dialogue before deleting a machine
 		// Remove the machine's data from savedMachines and destroys its display elements
-		let machine = savedMachines.splice(findMachineIndexById(selectedMachine),1)[0];
-		machine.display.remove();
-		machine.toolbutton.remove();
-		if(currentTool == 4 && currentMachine == selectedMachine) currentTool = undefined;
+		deleteMachine(selectedMachine);
 		
 		selectedMachine = undefined;
 		machineDetailsDisplay.box.hidden = true;
 	});
+	
+	function deleteMachine(id)
+	{
+		let machine = savedMachines.splice(findMachineIndexById(id),1)[0];
+		machine.display.remove();
+		machine.toolbutton.remove();
+		if(currentTool == 4 && currentMachine == id) currentTool = undefined;
+	}
 	
 	function sortMachineDisplay(compareFunction)
 	{
@@ -734,7 +773,6 @@ window.addEventListener('load',function() {
 	let scrollInfoIndicator = document.getElementById('scroll-info-indicator');
 	scrollInfoIndicator.classList.add('up');
 	window.onscroll = () => {
-		console.log('hi');
 		if(window.scrollY == 0)
 		{
 			scrollInfoIndicator.classList.add('up');
@@ -812,10 +850,10 @@ class CircuitData
 	/**
 	 * Returns a deep copy of the object
 	 */
-	clone()
+	static clone(obj)
 	{
 		let o = new CircuitData();
-		o.cells = this.cells.map(row => row.map(cell => ({
+		o.cells = obj.cells.map(row => row.map(cell => ({
 			connections: [...cell.connections],
 			circuit: cell.circuit,
 			ant: cell.ant
@@ -1010,9 +1048,7 @@ class Simulation
 					{
 						// spread an ant
 						
-						let [dy,dx] = dirToCoord(i);
-						// console.log(`attempting spread from ${[y,x]} to ${[y+dy,x+dx]}`);
-						
+						let [dy,dx] = dirToCoord(i);						
 						antSpread[y][x][i] = 1;
 					}
 				}
@@ -1093,7 +1129,6 @@ class Simulation
 					if(antSpread[y+dy][x+dx][(i+2)%4] && !antSpread[y][x][i])
 					{
 						// recieve the ant
-						// console.log(`recieving spread from ${[y+dy,x+dx]} to ${[y,x]}`);
 						antsIn++;
 						newAntDir = (i+2)%4;
 					}
@@ -1125,10 +1160,7 @@ class Simulation
 			antSpread.map(row => row[0][2]),
 			antSpread[this.height-1].map(cell => cell[3])
 		].map(a => a.reduce((a,b) => (a^b), 0));
-		if(outputs.includes(1)) console.log(outputs);
+		// if(outputs.includes(1)) console.log(outputs);
 		return outputs;
 	}
 }
-
-// And gate for test demonstration
-//let starterLayout={"cells":[[{"connections":[false,true,false,true],"ant":true,"antDir":3},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,false,true,true],"ant":false}],[{"connections":[true,true,false,false],"ant":false},{"connections":[false,true,true,true],"ant":false},{"connections":[true,false,false,true],"ant":false},{"connections":[true,false,true,true],"ant":false},{"connections":[false,false,true,true],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[true,false,false,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[true,true,true,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,true],"ant":false}],[{"connections":[true,true,false,true],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[true,true,false,false],"ant":false},{"connections":[true,false,true,false],"ant":false},{"connections":[false,true,true,false],"ant":false},{"connections":[false,true,false,true],"ant":false}],[{"connections":[false,true,true,false],"ant":true,"antDir":0},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,false,false,false],"ant":false},{"connections":[false,true,false,true],"ant":false}]]};

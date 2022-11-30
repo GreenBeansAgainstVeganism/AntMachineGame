@@ -33,6 +33,45 @@ textarea, input{
 	font-family: Book Antiqua, serif;
 }
 
+#save-menu {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding-left:5px;
+	/* padding: 5px; */
+	display: flex;
+	height: 30px;
+	width: 200px;
+	align-items: stretch;
+	border-bottom: 1px solid silver;
+}
+
+#save-menu h2 {
+	margin: 0;
+	font-size: 14px;
+	margin-right:10px;
+	align-self: center;
+}
+
+#save-menu * {
+	flex: 1;
+}
+
+#save-menu button {
+	background: white;
+	color: black;
+	border: none;
+}
+
+#save-menu button:hover {
+	background: yellow;
+}
+
+#save-menu button:active {
+	background: black;
+	color: yellow;
+}
+
 #center-box {
 	width: 60%;
 	height: 580px;
