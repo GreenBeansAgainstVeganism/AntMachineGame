@@ -43,6 +43,18 @@ window.addEventListener('load',function() {
 		deletebutton: document.getElementById('machine-details-delete-button')
 	};
 	
+	// Call this on any DOM element to map pressing Enter to a left click event
+	let enterTriggersLeftClick = function(x,ev = 'mousedown',extra) {
+		x.addEventListener('keydown', function(e)
+		{
+			if(e.key == 'Enter')
+			{
+				if(extra != undefined) extra();
+				this.dispatchEvent(new CustomEvent(ev));
+			}
+		});
+	};
+	
 	
 	// Generate the circuit board object, which allows display and manipulation of a circuit
 	circuitBoard = {
@@ -505,16 +517,19 @@ window.addEventListener('load',function() {
 		localStorage.setItem('savedMachines',JSON.stringify(savedMachines));
 		localStorage.setItem('openCircuit',JSON.stringify(circuitBoard.data));
 	});
+	enterTriggersLeftClick(gameSaveButton,'mouseup');
 	
 	gameLoadButton.addEventListener('mouseup', function() {
 		window.location.reload();
 	});
+	enterTriggersLeftClick(gameLoadButton,'mouseup');
 	
 	gameResetButton.addEventListener('mouseup', function() {
 		// TODO
 		localStorage.clear();
 		window.location.reload();
 	});
+	enterTriggersLeftClick(gameResetButton,'mouseup');
 	
 	let tabButtons = document.getElementsByClassName('tab-button');
 	for(let i=0; i<tabButtons.length; i++)
@@ -525,6 +540,7 @@ window.addEventListener('load',function() {
 				changeTab(this.dataset.tabname);
 			}
 		});
+		enterTriggersLeftClick(tabButtons[i]);
 	}
 	
 	function changeTab(tabname)
@@ -562,6 +578,7 @@ window.addEventListener('load',function() {
 				this.classList.add('tool-active');
 			}
 		});
+		enterTriggersLeftClick(toolButtons[i]);
 	}
 	
 	let simulationStartButton = document.getElementById('control-button-simulation-start');
@@ -582,6 +599,7 @@ window.addEventListener('load',function() {
 				this.innerText = 'Pause';
 		}
 	});
+	enterTriggersLeftClick(simulationStartButton);
 	
 	let simulationEndButton = document.getElementById('control-button-simulation-end');
 	simulationEndButton.addEventListener('mousedown', function() {
@@ -591,6 +609,7 @@ window.addEventListener('load',function() {
 			simulationStartButton.innerText = 'Start';
 		}
 	});
+	enterTriggersLeftClick(simulationEndButton);
 	
 	simIntervalInput.value = circuitBoard.simInterval;
 	simIntervalInput.addEventListener('change',function() {
@@ -604,9 +623,12 @@ window.addEventListener('load',function() {
 		}
 	});
 	
-	simInputInputs.forEach((obj,i) => obj.addEventListener('change',function() {
-		circuitBoard.simInputs[i] = this.checked;
-	}));
+	simInputInputs.forEach((obj,i) => {
+		obj.addEventListener('change',function() {
+			circuitBoard.simInputs[i] = this.checked;
+		});
+		enterTriggersLeftClick(obj,'change',() => {obj.checked = !obj.checked;});
+	});
 	
 	fnameInput.addEventListener('change', function() {
 		this.value = this.value.trim();
@@ -626,6 +648,7 @@ window.addEventListener('load',function() {
 		
 		registerMachine(fname,CircuitData.clone(circuitBoard.data));
 	});
+	enterTriggersLeftClick(saveButton);
 	
 	loadButton.addEventListener('mousedown', function() {
 		let fname = fnameInput.value.length ? fnameInput.value : fnameInput.placeholder;
@@ -636,8 +659,10 @@ window.addEventListener('load',function() {
 			circuitBoard.loadData(entry.data);
 		}
 	});
+	enterTriggersLeftClick(loadButton);
 	
 	clearButton.addEventListener('mousedown', function() {circuitBoard.clear();});
+	enterTriggersLeftClick(clearButton);
 	
 	heightInput.addEventListener('change', function() {
 		inputNumberFix(this);
@@ -690,6 +715,7 @@ window.addEventListener('load',function() {
 				machineDetailsDisplay.heading.innerText = entry.name;
 				machineDetailsDisplay.description.value = entry.desc;
 			});
+			enterTriggersLeftClick(display);
 			machineListDisplay.appendChild(display);
 			
 			// TEMP sorts display order of machines alphabetically as they are added
@@ -717,6 +743,7 @@ window.addEventListener('load',function() {
 					this.classList.add('tool-active');
 				}
 			});
+			enterTriggersLeftClick(tool);
 			
 			toolButtons.push(tool);
 			toolList.appendChild(tool);
@@ -740,6 +767,7 @@ window.addEventListener('load',function() {
 		circuitBoard.loadData(machine.data);
 		fnameInput.value = machine.name;
 	});
+	enterTriggersLeftClick(machineDetailsDisplay.editbutton,'mouseup');
 	
 	machineDetailsDisplay.deletebutton.addEventListener('mouseup', function() {
 		// TODO Add confirmation dialogue before deleting a machine
@@ -749,6 +777,7 @@ window.addEventListener('load',function() {
 		selectedMachine = undefined;
 		machineDetailsDisplay.box.hidden = true;
 	});
+	enterTriggersLeftClick(machineDetailsDisplay.deletebutton,'mouseup');
 	
 	function deleteMachine(id)
 	{
